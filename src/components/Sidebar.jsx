@@ -3,86 +3,137 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Activity, Compass, Bell, ShieldAlert, Camera, Cpu, Pill, 
   Dumbbell, Brain, Shield, Users, Radio, Lock, LogOut, 
-  ChevronLeft, ChevronRight, X, ShieldCheck, Orbit, UserCheck, Flame
+  ChevronLeft, ChevronRight, X, ShieldCheck, Orbit, Flame,
+  Stethoscope, UserCheck, HardDrive, AlertTriangle
 } from 'lucide-react';
 import { useAuthStore } from '../auth/session';
 import { useMissionStore } from '../store/useMissionStore';
-import { getRoleBadgeInfo } from '../auth/rbac';
+import { useLanguage } from '../i18n/LanguageContext';
+import { getRoleBadgeInfo, getRoleHomeRoute, ROLES } from '../auth/rbac';
 import { soundEngine } from '../utils/audio';
+import EmergencyOverrideModal from './EmergencyOverrideModal';
 
 export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser, logout, lockTerminal } = useAuthStore();
-  const { alerts, activeEvents, missionDay } = useMissionStore();
+  const { alerts, activeEvents } = useMissionStore();
+  const { t } = useLanguage();
+  const [showOverrideModal, setShowOverrideModal] = useState(false);
 
-  const roleBadge = getRoleBadgeInfo(currentUser?.role);
+  const role = currentUser?.role || 'astronaut';
+  const roleBadge = getRoleBadgeInfo(role);
   const criticalAlertCount = alerts.filter(a => a.severity === 'critical').length;
-
-  const navGroups = [
-    {
-      group: 'Mission',
-      items: [
-        { to: '/dashboard', label: 'Dashboard', icon: Activity, roles: ['astronaut', 'flight_surgeon', 'mission_commander', 'admin'] },
-        { to: '/mission-control', label: 'Mission Control', icon: Compass, roles: ['astronaut', 'flight_surgeon', 'mission_commander', 'admin'] },
-        { to: '/alerts', label: 'Alerts Center', icon: Bell, badge: alerts.length, badgeCrit: criticalAlertCount > 0, roles: ['astronaut', 'flight_surgeon', 'mission_commander', 'admin'] }
-      ]
-    },
-    {
-      group: 'Health',
-      items: [
-        { to: '/baseline', label: 'Health Drift & Base', icon: Activity, roles: ['astronaut', 'flight_surgeon', 'admin'] },
-        { to: '/hazards', label: 'Multi-Hazard Risk', icon: ShieldAlert, roles: ['astronaut', 'flight_surgeon', 'mission_commander', 'admin'] },
-        { to: '/body-scan', label: '3D Body Scanner', icon: Orbit, roles: ['astronaut', 'flight_surgeon', 'admin'] },
-        { to: '/scan', label: 'Contactless Vitals', icon: Camera, roles: ['astronaut', 'flight_surgeon', 'admin'] }
-      ]
-    },
-    {
-      group: 'Care',
-      items: [
-        { to: '/surgeon', label: 'AI Flight Surgeon', icon: Cpu, roles: ['astronaut', 'flight_surgeon', 'admin'] },
-        { to: '/inventory', label: 'Medical Kit', icon: Pill, roles: ['astronaut', 'flight_surgeon', 'mission_commander', 'admin'] },
-        { to: '/exercise', label: 'Exercise Plan', icon: Dumbbell, roles: ['astronaut', 'flight_surgeon', 'mission_commander', 'admin'] },
-        { to: '/cognition', label: 'Mind & Cognition', icon: Brain, roles: ['astronaut', 'flight_surgeon', 'admin'] }
-      ]
-    },
-    {
-      group: 'Safety',
-      items: [
-        { to: '/shelter', label: 'Radiation Shelter', icon: Flame, badge: activeEvents.solarFlare ? 'SPE' : null, roles: ['astronaut', 'flight_surgeon', 'mission_commander', 'admin'] }
-      ]
-    },
-    {
-      group: 'Team',
-      items: [
-        { to: '/crew', label: 'Crew View', icon: Users, roles: ['astronaut', 'flight_surgeon', 'mission_commander', 'admin'] }
-      ]
-    },
-    {
-      group: 'Comms',
-      items: [
-        { to: '/sync', label: 'Earth Sync & Delay', icon: Radio, roles: ['astronaut', 'flight_surgeon', 'mission_commander', 'admin'] }
-      ]
-    },
-    {
-      group: 'Security',
-      items: [
-        { to: '/consent', label: 'Consent Center', icon: Shield, roles: ['astronaut', 'admin'] },
-        { to: '/admin', label: 'Admin Ledger', icon: ShieldCheck, roles: ['admin'] }
-      ]
-    }
-  ];
 
   const handleNav = () => {
     soundEngine.playClick();
     if (onClose) onClose();
   };
 
-  const isPermitted = (roles) => {
-    if (!currentUser?.role) return true;
-    if (currentUser.role === 'admin') return true;
-    return roles.includes(currentUser.role);
+  // Build role-specific navigation menu
+  const getRoleNavItems = () => {
+    switch (role) {
+      case ROLES.FLIGHT_SURGEON:
+        return [
+          {
+            groupTitle: t('navPatientReview'),
+            items: [
+              { to: '/doctor', label: t('navPatients'), icon: Users, badge: null },
+              { to: '/alerts', label: t('navAlertsQueue'), icon: Bell, badge: alerts.length, badgeCrit: criticalAlertCount > 0 },
+              { to: '/baseline', label: t('navReports'), icon: Activity, badge: null },
+              { to: '/sync', label: t('navSync'), icon: Radio, badge: null },
+              { action: 'emergency', label: t('navEmergencyAccess'), icon: ShieldAlert, badge: 'OVERRIDE', badgeCrit: true }
+            ]
+          }
+        ];
+
+      case ROLES.MISSION_COMMANDER:
+        return [
+          {
+            groupTitle: t('navMissionOverview'),
+            items: [
+              { to: '/commander', label: t('navMissionOverview'), icon: Compass, badge: null },
+              { to: '/crew', label: t('navCrewReadiness'), icon: Users, badge: null },
+              { to: '/commander', hash: '#tasks', label: t('navTasks'), icon: UserCheck, badge: null },
+              { to: '/mission-control', label: t('navTimeline'), icon: Orbit, badge: null },
+              { to: '/commander', hash: '#orders', label: t('navEmergencyOrders'), icon: ShieldAlert, badge: null },
+              { to: '/shelter', label: t('navShelter'), icon: Flame, badge: activeEvents.solarFlare ? 'SPE' : null, badgeCrit: activeEvents.solarFlare }
+            ]
+          }
+        ];
+
+      case ROLES.ADMIN:
+        return [
+          {
+            groupTitle: t('navControlRoom'),
+            items: [
+              { to: '/admin', hash: '#users', label: t('navUsers'), icon: Users, badge: null },
+              { to: '/admin', hash: '#audit', label: t('navAuditLog'), icon: ShieldCheck, badge: null },
+              { to: '/admin', hash: '#status', label: t('navSystemStatus'), icon: HardDrive, badge: null },
+              { to: '/admin', hash: '#sessions', label: t('navSessions'), icon: Lock, badge: null },
+              { to: '/admin', hash: '#backup', label: t('navBackup'), icon: Radio, badge: null }
+            ]
+          },
+          {
+            groupTitle: t('navInspectorViews'),
+            items: [
+              { to: '/dashboard', label: t('navMyHealth'), icon: Activity, badge: null },
+              { to: '/doctor', label: t('navPatientReview'), icon: Stethoscope, badge: null },
+              { to: '/commander', label: t('navMissionOverview'), icon: Compass, badge: null }
+            ]
+          }
+        ];
+
+      case ROLES.ASTRONAUT:
+      default:
+        return [
+          {
+            groupTitle: t('navMyHealth'),
+            items: [
+              { to: '/dashboard', label: t('navMyHealth'), icon: Activity, badge: null },
+              { to: '/scan', label: t('navContactless'), icon: Camera, badge: null },
+              { to: '/surgeon', label: t('navSurgeon'), icon: Cpu, badge: null },
+              { to: '/inventory', label: t('navInventory'), icon: Pill, badge: null },
+              { to: '/exercise', label: t('navExercise'), icon: Dumbbell, badge: null },
+              { to: '/cognition', label: t('navCognition'), icon: Brain, badge: null },
+              { to: '/shelter', label: t('navShelter'), icon: Flame, badge: activeEvents.solarFlare ? 'SPE' : null, badgeCrit: activeEvents.solarFlare },
+              { to: '/consent', label: t('navConsent'), icon: Shield, badge: null }
+            ]
+          }
+        ];
+    }
   };
+
+  const roleNavGroups = getRoleNavItems();
+
+  // Active link styling per role
+  const getActiveStyles = () => {
+    switch (role) {
+      case ROLES.FLIGHT_SURGEON:
+        return {
+          activeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.25)]',
+          iconActive: 'text-emerald-400'
+        };
+      case ROLES.MISSION_COMMANDER:
+        return {
+          activeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.25)]',
+          iconActive: 'text-amber-400'
+        };
+      case ROLES.ADMIN:
+        return {
+          activeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.25)]',
+          iconActive: 'text-purple-400'
+        };
+      case ROLES.ASTRONAUT:
+      default:
+        return {
+          activeClass: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-[0_0_15px_rgba(0,242,254,0.25)]',
+          iconActive: 'text-cyan-400'
+        };
+    }
+  };
+
+  const { activeClass, iconActive } = getActiveStyles();
 
   return (
     <>
@@ -94,7 +145,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
         />
       )}
 
-      {/* Sidebar Container */}
+      {/* Sidebar Container with 3D Glass styling */}
       <aside
         className={`
           fixed top-0 bottom-0 left-0 z-50 flex flex-col justify-between
@@ -108,9 +159,13 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
         {/* Top Branding */}
         <div className="p-3 border-b border-white/5 flex items-center justify-between">
           <div 
-            onClick={() => { soundEngine.playClick(); navigate('/dashboard'); handleNav(); }}
+            onClick={() => { 
+              soundEngine.playClick(); 
+              navigate(getRoleHomeRoute(currentUser?.role)); 
+              handleNav(); 
+            }}
             className={`flex items-center gap-2.5 cursor-pointer group ${isCollapsed ? 'lg:justify-center lg:w-full' : ''}`}
-            title="Mangal Health Sentinel"
+            title={t('appName')}
           >
             <img
               src="/assets/mission-mangal-logo.png"
@@ -126,7 +181,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
                   </span>
                 </div>
                 <p className="text-[8px] font-mono text-mangal-blue tracking-widest truncate">
-                  MISSION MANGAL 2.0
+                  {t('missionTitle')}
                 </p>
               </div>
             )}
@@ -150,68 +205,93 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
           </button>
         </div>
 
-        {/* Scrollable Navigation Groups */}
+        {/* Scrollable Role-Specific Navigation Groups */}
         <div className="flex-1 overflow-y-auto py-3 px-2 space-y-4 scrollbar-none">
-          {navGroups.map((group) => {
-            const permittedItems = group.items.filter(item => isPermitted(item.roles));
-            if (permittedItems.length === 0) return null;
+          {roleNavGroups.map((group, gIdx) => (
+            <div key={gIdx} className="space-y-1">
+              {(!isCollapsed || isOpen) && (
+                <span className="px-2.5 text-[9px] font-mono font-bold tracking-widest text-slate-400 uppercase block mb-1">
+                  {group.groupTitle}
+                </span>
+              )}
 
-            return (
-              <div key={group.group} className="space-y-1">
-                {(!isCollapsed || isOpen) && (
-                  <span className="px-2.5 text-[9px] font-mono font-bold tracking-widest text-slate-500 uppercase block mb-1">
-                    {group.group}
-                  </span>
-                )}
+              {group.items.map((item, iIdx) => {
+                const Icon = item.icon;
 
-                {permittedItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location.pathname === item.to || (item.to === '/dashboard' && location.pathname === '/');
-
+                // Handle Action button (like Doctor Emergency Override)
+                if (item.action === 'emergency') {
                   return (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      onClick={handleNav}
+                    <button
+                      key={iIdx}
+                      onClick={() => {
+                        soundEngine.playWarningChime();
+                        setShowOverrideModal(true);
+                      }}
                       title={isCollapsed ? item.label : undefined}
                       className={`
-                        flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-mono font-medium transition-all group relative
-                        ${isActive
-                          ? 'bg-mangal-blue/20 text-cyan-300 border border-mangal-blue/50 shadow-[0_0_15px_rgba(46,139,255,0.25)]'
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-space-900 border border-transparent'
-                        }
+                        w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-mono font-medium transition-all group relative text-left
+                        bg-red-950/40 hover:bg-red-900/50 text-red-300 border border-red-500/40
                         ${isCollapsed && !isOpen ? 'lg:justify-center' : ''}
                       `}
                     >
-                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-cyan-400' : 'text-slate-400 group-hover:text-cyan-300'}`} />
-
+                      <Icon className="w-4 h-4 shrink-0 text-red-400 animate-pulse" />
                       {(!isCollapsed || isOpen) && (
-                        <span className="truncate flex-1">{item.label}</span>
+                        <span className="truncate flex-1 font-bold">{item.label}</span>
                       )}
-
-                      {/* Notification Badge */}
                       {item.badge && (!isCollapsed || isOpen) && (
-                        <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold ${
-                          item.badgeCrit || item.badge === 'SPE'
-                            ? 'bg-red-500 text-white animate-pulse'
-                            : 'bg-space-900 text-cyan-300 border border-slate-700'
-                        }`}>
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-red-600 text-white animate-pulse">
                           {item.badge}
                         </span>
                       )}
-
-                      {/* Tooltip in collapsed mode */}
-                      {isCollapsed && !isOpen && (
-                        <div className="hidden lg:group-hover:flex absolute left-full ml-2 px-2.5 py-1 rounded bg-space-900 border border-slate-700 text-white text-[11px] whitespace-nowrap shadow-xl z-50">
-                          {item.label}
-                        </div>
-                      )}
-                    </NavLink>
+                    </button>
                   );
-                })}
-              </div>
-            );
-          })}
+                }
+
+                const isActive = location.pathname === item.to || (item.to === getRoleHomeRoute(role) && location.pathname === '/');
+
+                return (
+                  <NavLink
+                    key={item.to + (item.hash || '') + iIdx}
+                    to={item.to + (item.hash || '')}
+                    onClick={handleNav}
+                    title={isCollapsed ? item.label : undefined}
+                    className={`
+                      flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-mono font-medium transition-all group relative
+                      ${isActive
+                        ? `${activeClass} border`
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-space-900 border border-transparent'
+                      }
+                      ${isCollapsed && !isOpen ? 'lg:justify-center' : ''}
+                    `}
+                  >
+                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? iconActive : 'text-slate-400 group-hover:text-slate-200'}`} />
+
+                    {(!isCollapsed || isOpen) && (
+                      <span className="truncate flex-1">{item.label}</span>
+                    )}
+
+                    {/* Notification Badge */}
+                    {item.badge && (!isCollapsed || isOpen) && (
+                      <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold ${
+                        item.badgeCrit || item.badge === 'SPE'
+                          ? 'bg-red-500 text-white animate-pulse'
+                          : 'bg-space-900 text-cyan-300 border border-slate-700'
+                      }`}>
+                        {item.badge}
+                      </span>
+                    )}
+
+                    {/* Tooltip in collapsed mode */}
+                    {isCollapsed && !isOpen && (
+                      <div className="hidden lg:group-hover:flex absolute left-full ml-2 px-2.5 py-1 rounded bg-space-900 border border-slate-700 text-white text-[11px] whitespace-nowrap shadow-xl z-50">
+                        {item.label}
+                      </div>
+                    )}
+                  </NavLink>
+                );
+              })}
+            </div>
+          ))}
         </div>
 
         {/* Bottom User Profile & Session Controls */}
@@ -219,8 +299,8 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
           {currentUser && (
             <div className={`flex items-center gap-2 ${isCollapsed && !isOpen ? 'lg:justify-center' : ''}`}>
               <div 
-                className="w-8 h-8 rounded-lg bg-mangal-copper/20 border border-mangal-copper/50 flex items-center justify-center font-mono font-bold text-mangal-gold text-xs shrink-0 cursor-pointer"
-                onClick={() => navigate('/consent')}
+                className="w-8 h-8 rounded-lg bg-space-900 border border-slate-700 flex items-center justify-center font-mono font-bold text-white text-xs shrink-0 cursor-pointer hover:border-mangal-blue transition-colors"
+                onClick={() => navigate(role === ROLES.ADMIN ? '/admin' : '/consent')}
                 title={currentUser.name}
               >
                 {currentUser.name ? currentUser.name.split(' ').map(n => n[0]).join('').slice(0, 2) : 'AU'}
@@ -230,7 +310,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-mono font-bold text-white truncate">{currentUser.name}</div>
                   <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold border uppercase inline-block ${roleBadge.color}`}>
-                    {roleBadge.label}
+                    {t(`role${roleBadge.label}`) || roleBadge.label}
                   </span>
                 </div>
               )}
@@ -241,25 +321,31 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
           <div className={`flex items-center gap-1.5 pt-1 ${isCollapsed && !isOpen ? 'lg:flex-col' : 'justify-between'}`}>
             <button
               onClick={() => { soundEngine.playClick(); lockTerminal(); }}
-              title="Lock Terminal"
-              className="p-1.5 rounded-lg bg-space-900 hover:bg-space-850 border border-slate-700 text-slate-400 hover:text-mangal-gold text-xs font-mono flex items-center justify-center flex-1"
+              title={t('lockTerminal')}
+              className="p-1.5 rounded-lg bg-space-900 hover:bg-space-850 border border-slate-700 text-slate-400 hover:text-mangal-gold text-xs font-mono flex items-center justify-center flex-1 transition-colors"
             >
               <Lock className="w-3.5 h-3.5" />
-              {(!isCollapsed || isOpen) && <span className="ml-1 text-[11px]">Lock</span>}
+              {(!isCollapsed || isOpen) && <span className="ml-1 text-[11px]">{t('lockTerminal')}</span>}
             </button>
 
             <button
               onClick={() => { soundEngine.playClick(); logout(); }}
-              title="Logout Session"
-              className="p-1.5 rounded-lg bg-space-900 hover:bg-red-950/40 border border-slate-700 hover:border-red-500/50 text-slate-400 hover:text-red-400 text-xs font-mono flex items-center justify-center flex-1"
+              title={t('signOut')}
+              className="p-1.5 rounded-lg bg-space-900 hover:bg-red-950/40 border border-slate-700 hover:border-red-500/50 text-slate-400 hover:text-red-400 text-xs font-mono flex items-center justify-center flex-1 transition-colors"
             >
               <LogOut className="w-3.5 h-3.5" />
-              {(!isCollapsed || isOpen) && <span className="ml-1 text-[11px]">Logout</span>}
+              {(!isCollapsed || isOpen) && <span className="ml-1 text-[11px]">{t('signOut')}</span>}
             </button>
           </div>
         </div>
 
       </aside>
+
+      {/* Emergency Override Modal for Doctor */}
+      <EmergencyOverrideModal
+        isOpen={showOverrideModal}
+        onClose={() => setShowOverrideModal(false)}
+      />
     </>
   );
 }

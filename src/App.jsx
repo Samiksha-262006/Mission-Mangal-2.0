@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import StarfieldBackground from './components/StarfieldBackground';
 import SolarFlareModal from './components/SolarFlareModal';
@@ -9,11 +9,15 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import EmergencyOverrideModal from './components/EmergencyOverrideModal';
 import { isSecureContextAvailable } from './utils/webgl';
+import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
+import LanguageSwitcher from './components/LanguageSwitcher';
 
 // Pages
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import DoctorPatientReviewPage from './pages/DoctorPatientReviewPage';
+import CommanderOverviewPage from './pages/CommanderOverviewPage';
 import MissionControlPage from './pages/MissionControlPage';
 import BaselineDriftPage from './pages/BaselineDriftPage';
 import MultiHazardRiskPage from './pages/MultiHazardRiskPage';
@@ -33,11 +37,11 @@ import AccessDeniedPage from './pages/AccessDeniedPage';
 
 import { useAuthStore } from './auth/session';
 import { useMissionStore } from './store/useMissionStore';
-import { getRoleBadgeInfo } from './auth/rbac';
+import { getRoleBadgeInfo, getRoleHomeRoute } from './auth/rbac';
 import { soundEngine } from './utils/audio';
 import {
   AlertTriangle, Moon, Eye, Volume2, VolumeX, Lock, LogOut,
-  Menu, Shield, ShieldCheck
+  Menu, Shield, ShieldCheck, HeartPulse
 } from 'lucide-react';
 
 // Insecure Context Banner Component
@@ -60,6 +64,8 @@ function InsecureContextBanner() {
 
 // Slim TopBar (replaces old full Navbar)
 function TopBar({ onOpenSidebar, onOpenProfile }) {
+  const navigate = useNavigate();
+  const { t } = useLanguage();
   const { missionDay, currentVitals, activeEvents, lowGlareMode, tacticalRedMode, soundMuted, toggleLowGlare, toggleTacticalRed, toggleSoundMute, alerts } = useMissionStore();
   const { currentUser, logout, lockTerminal, emergencyOverride } = useAuthStore();
   const [showOverrideModal, setShowOverrideModal] = useState(false);
@@ -95,99 +101,97 @@ function TopBar({ onOpenSidebar, onOpenProfile }) {
 
             {/* Sol Day Chip */}
             <div className="bg-space-900 border border-mangal-blue/40 px-2 sm:px-2.5 py-1 rounded-lg text-xs font-mono flex items-center gap-1 shrink-0">
-              <span className="text-slate-400 text-[10px]">SOL</span>
+              <span className="text-slate-400 text-[10px] uppercase">{t('solDay')}</span>
               <span className="font-bold text-white text-xs sm:text-sm">{missionDay}</span>
               <span className="text-slate-500 text-[9px]">/ 180</span>
             </div>
 
             {/* Health Score Pill */}
-            <div className={`cursor-pointer px-2.5 py-1 rounded-lg border text-xs font-mono flex items-center gap-1 transition-colors ${
+            <div className={`cursor-pointer px-2.5 py-1 rounded-lg border text-xs font-mono flex items-center gap-1 transition-colors shrink-0 ${
               currentVitals.healthScore >= 80
                 ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
                 : currentVitals.healthScore >= 60
                 ? 'bg-amber-950/40 border-amber-500/40 text-amber-300'
                 : 'bg-red-950/40 border-red-500/50 text-red-300 animate-pulse'
             }`}>
-              <span className="text-[9px] hidden sm:inline">HEALTH</span>
+              <span className="text-[9px] hidden sm:inline">{t('healthStatus')}</span>
               <span className="font-bold">{currentVitals.healthScore}%</span>
-            </div>
-
-            {/* Active Event Pills */}
-            <div className="hidden xl:flex items-center gap-1.5">
-              {activeEvents.solarFlare && (
-                <span className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/50 animate-pulse">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span> SPE
-                </span>
-              )}
-              {activeEvents.chestPain && (
-                <span className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/50 animate-pulse">
-                  CARDIAC
-                </span>
-              )}
-              {activeEvents.commBlackout && (
-                <span className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/50">
-                  BLACKOUT
-                </span>
-              )}
             </div>
           </div>
 
-          {/* Right Controls */}
+          {/* Right Controls: Big "I Need Help" Button + Language Switcher + User */}
           <div className="flex items-center gap-1.5 sm:gap-2">
+            
+            {/* Big "I Need Help" Emergency Doctor Button */}
+            <button
+              onClick={() => { soundEngine.playTelemetryPing(); navigate('/surgeon'); }}
+              className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-rose-500 text-white font-mono font-bold text-xs flex items-center gap-1.5 shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse shrink-0 transition-transform active:scale-95"
+              title="Talk to AI Doctor Immediately"
+            >
+              <HeartPulse className="w-3.5 h-3.5 text-white" />
+              <span className="hidden sm:inline font-display font-bold uppercase tracking-wider">{t('needHelp')}</span>
+            </button>
+
+            {/* Language Switcher in Top Bar */}
+            <LanguageSwitcher compact />
+
             {/* Flight Surgeon Break-Glass */}
             {isFlightSurgeon && (
               <button
                 onClick={() => { soundEngine.playClick(); setShowOverrideModal(true); }}
-                className={`px-2 py-1 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 transition-all ${
+                className={`px-2 py-1 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 transition-all shrink-0 ${
                   emergencyOverride.active
                     ? 'bg-red-500 text-white animate-pulse border border-red-400'
                     : 'bg-red-950/40 hover:bg-red-900/40 text-red-300 border border-red-500/40'
                 }`}
-                title="Emergency Medical Override"
+                title={t('emergencyOverride')}
               >
                 <AlertTriangle className="w-3 h-3" />
-                <span className="hidden sm:inline">{emergencyOverride.active ? 'Override Active' : 'Override'}</span>
+                <span className="hidden sm:inline">{emergencyOverride.active ? 'Override Active' : t('emergencyOverride')}</span>
               </button>
             )}
 
             {/* UI Toggles */}
-            <div className="hidden sm:flex items-center gap-0.5 bg-space-900/80 p-0.5 rounded-lg border border-slate-800">
+            <div className="hidden md:flex items-center gap-0.5 bg-space-900/80 p-0.5 rounded-lg border border-slate-800">
               <button
                 onClick={() => { soundEngine.playClick(); toggleLowGlare(); }}
-                title="Low-Glare Mode"
+                title={t('lowGlareMode')}
                 className={`p-1.5 rounded text-xs ${lowGlareMode ? 'bg-mangal-blue/30 text-cyan-300' : 'text-slate-400 hover:text-white'}`}
               >
                 <Moon className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => { soundEngine.playClick(); toggleTacticalRed(); }}
-                title="Tactical Night Mode"
+                title={t('tacticalNightMode')}
                 className={`p-1.5 rounded text-xs ${tacticalRedMode ? 'bg-red-500/30 text-red-300 ring-1 ring-red-500' : 'text-slate-400 hover:text-white'}`}
               >
                 <Eye className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={toggleSoundMute}
-                title={soundMuted ? 'Unmute Audio' : 'Mute Alarms'}
+                title={t('muteAudio')}
                 className="p-1.5 rounded text-xs text-slate-400 hover:text-white"
               >
                 {soundMuted ? <VolumeX className="w-3.5 h-3.5 text-amber-400" /> : <Volume2 className="w-3.5 h-3.5" />}
               </button>
             </div>
 
-            {/* User Badge */}
+            {/* User Badge & Welcome Purpose Line */}
             {currentUser && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => { soundEngine.playClick(); onOpenProfile(); }}
-                  className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1 rounded-lg bg-space-900 border border-slate-700 hover:border-mangal-blue text-xs font-mono"
-                  title="Profile / Baseline Setup"
+                  className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1 rounded-lg bg-space-900 border border-slate-700 hover:border-mangal-blue text-xs font-mono transition-colors"
+                  title={`${currentUser.name} · ${roleBadge.description}`}
                 >
-                  <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold border uppercase ${roleBadge.color}`}>
-                    {roleBadge.label}
+                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold border uppercase ${roleBadge.color}`}>
+                    {t(`role${roleBadge.label}`) || roleBadge.label}
                   </span>
-                  <span className="text-white hidden lg:inline text-xs truncate max-w-[100px]">{currentUser.name}</span>
+                  <span className="text-white hidden lg:inline text-xs truncate max-w-[90px]">{currentUser.name}</span>
                 </button>
+                <span className="hidden xl:inline text-[10px] font-mono text-slate-400 border-l border-slate-800 pl-2 max-w-[260px] truncate" title={roleBadge.description}>
+                  {roleBadge.description}
+                </span>
               </div>
             )}
           </div>
@@ -208,7 +212,7 @@ function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const location = useLocation();
-  const { initializeAuth, isAuthenticated, isLocked, lockTerminal } = useAuthStore();
+  const { initializeAuth, isAuthenticated, isLocked, lockTerminal, currentUser } = useAuthStore();
 
   useEffect(() => {
     initializeAuth();
@@ -301,17 +305,33 @@ function AppContent() {
             <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-5 py-4 sm:py-6 overflow-x-hidden">
               <ErrorBoundary moduleName="Application">
                 <Routes>
-                  {/* Root Redirect */}
+                  {/* Root Redirect by Role */}
                   <Route
                     path="/"
-                    element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/welcome" replace />}
+                    element={isAuthenticated ? <Navigate to={getRoleHomeRoute(currentUser?.role)} replace /> : <Navigate to="/welcome" replace />}
                   />
 
-                  {/* Mission */}
+                  {/* Role Homepages */}
                   <Route path="/dashboard" element={
-                    <ProtectedRoute>
-                      <ErrorBoundary moduleName="Dashboard">
+                    <ProtectedRoute allowedRoles={['astronaut', 'admin']}>
+                      <ErrorBoundary moduleName="Astronaut My Health">
                         <DashboardPage />
+                      </ErrorBoundary>
+                    </ProtectedRoute>
+                  } />
+
+                  <Route path="/doctor" element={
+                    <ProtectedRoute allowedRoles={['flight_surgeon', 'admin']}>
+                      <ErrorBoundary moduleName="Doctor Patient Review">
+                        <DoctorPatientReviewPage />
+                      </ErrorBoundary>
+                    </ProtectedRoute>
+                  } />
+
+                  <Route path="/commander" element={
+                    <ProtectedRoute allowedRoles={['mission_commander', 'admin']}>
+                      <ErrorBoundary moduleName="Commander Mission Overview">
+                        <CommanderOverviewPage />
                       </ErrorBoundary>
                     </ProtectedRoute>
                   } />
@@ -466,9 +486,11 @@ function AppContent() {
 export default function App() {
   return (
     <ErrorBoundary moduleName="Mangal Health Sentinel">
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
+      <LanguageProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </LanguageProvider>
     </ErrorBoundary>
   );
 }

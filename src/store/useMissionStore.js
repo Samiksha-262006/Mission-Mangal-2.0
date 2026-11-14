@@ -452,5 +452,19 @@ export const useMissionStore = create((set, get) => ({
     set((state) => ({
       alerts: state.alerts.filter((a) => a.id !== alertId)
     }));
+  },
+
+  // Update Biometric Measurement (from rPPG or simulation)
+  updateVitalsMeasurement: ({ heartRate, source, confidence }) => {
+    set((state) => {
+      const updatedVitals = {
+        ...state.currentVitals,
+        heartRate: heartRate || state.currentVitals.heartRate,
+        measurementSource: source || 'simulated',
+        measurementConfidence: confidence || 'Medium',
+        lastMeasuredAt: `Day ${state.missionDay} - ${new Date().toLocaleTimeString()}`
+      };
+      return { currentVitals: updatedVitals };
+    });
   }
 }));
