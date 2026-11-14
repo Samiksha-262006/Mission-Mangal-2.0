@@ -1,0 +1,17 @@
+{
+  "name": "Mangal Health Sentinel",
+  "short_name": "MangalSentinel",
+  "description": "Offline-First AI Health Monitoring System by Team Mission Mangal 2.0 (Nagpur, India) for NASA Space Apps Challenge",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070B1F",
+  "theme_color": "#C8693A",
+  "icons": [
+    {
+      "src": "/assets/mission-mangal-logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

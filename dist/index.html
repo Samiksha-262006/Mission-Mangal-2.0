@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/assets/mission-mangal-logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#070B1F" />
+    <meta name="description" content="Mangal Health Sentinel - Offline-First AI Health Monitoring System by Team Mission Mangal 2.0 (Nagpur, India) for NASA Space Apps Challenge" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>Mangal Health Sentinel | Mission Mangal 2.0</title>
+    <!-- Preconnect to Google Fonts for Orbitron, Rajdhani, and Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700;800;900&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="/assets/index-sgcMZBgN.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-fNvQSQZ0.js">
+    <link rel="modulepreload" crossorigin href="/assets/icons-BT5XE-qc.js">
+    <link rel="modulepreload" crossorigin href="/assets/three-DhznGcHU.js">
+    <link rel="modulepreload" crossorigin href="/assets/recharts-Dn6bdtSP.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-D-39XWmy.css">
+  </head>
+  <body class="bg-space-950 text-slate-100 min-h-screen selection:bg-mangal-copper selection:text-white overflow-x-hidden font-sans">
+    <div id="root"></div>
+    <script>
+      // Register offline PWA service worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,138 @@
+[
+  {
+    "id": "crew_1",
+    "name": "Cmdr. Sarah Chen",
+    "role": "Mission Commander",
+    "age": 42,
+    "nationality": "NASA / USA",
+    "avatar": "SC",
+    "healthScore": 92,
+    "fatigueLevel": 28,
+    "sleepHours": 7.4,
+    "stressScore": 34,
+    "radiationDose": 84.2,
+    "currentTask": "Orbital Navigation Check",
+    "taskRisk": "Medium",
+    "status": "Nominal",
+    "baseline": {
+      "heartRate": 60,
+      "systolic": 116,
+      "diastolic": 76,
+      "spO2": 99,
+      "bodyTemp": 36.7,
+      "hydration": 78,
+      "boneDensity": 100,
+      "vo2Max": 52
+    },
+    "currentVitals": {
+      "heartRate": 66,
+      "systolic": 120,
+      "diastolic": 78,
+      "spO2": 98,
+      "bodyTemp": 36.8,
+      "hydration": 74
+    }
+  },
+  {
+    "id": "crew_2",
+    "name": "Dr. Elena Rostova",
+    "role": "Chief Medical Officer / Astrobiologist",
+    "age": 38,
+    "nationality": "ESA / Germany",
+    "avatar": "ER",
+    "healthScore": 88,
+    "fatigueLevel": 42,
+    "sleepHours": 6.2,
+    "stressScore": 45,
+    "radiationDose": 81.5,
+    "currentTask": "Hydroponics Biological Sampling",
+    "taskRisk": "Low",
+    "status": "Nominal",
+    "baseline": {
+      "heartRate": 56,
+      "systolic": 112,
+      "diastolic": 72,
+      "spO2": 99,
+      "bodyTemp": 36.6,
+      "hydration": 80,
+      "boneDensity": 100,
+      "vo2Max": 49
+    },
+    "currentVitals": {
+      "heartRate": 63,
+      "systolic": 118,
+      "diastolic": 74,
+      "spO2": 98,
+      "bodyTemp": 36.7,
+      "hydration": 71
+    }
+  },
+  {
+    "id": "crew_3",
+    "name": "Lt. Marcus Vance",
+    "role": "Pilot / Systems Engineer",
+    "age": 36,
+    "nationality": "NASA / USA",
+    "avatar": "MV",
+    "healthScore": 68,
+    "fatigueLevel": 74,
+    "sleepHours": 4.1,
+    "stressScore": 82,
+    "radiationDose": 96.8,
+    "currentTask": "EVA Exterior Solar Array Repair",
+    "taskRisk": "Critical",
+    "status": "Elevated Fatigue Risk",
+    "baseline": {
+      "heartRate": 62,
+      "systolic": 118,
+      "diastolic": 78,
+      "spO2": 99,
+      "bodyTemp": 36.6,
+      "hydration": 76,
+      "boneDensity": 100,
+      "vo2Max": 54
+    },
+    "currentVitals": {
+      "heartRate": 79,
+      "systolic": 132,
+      "diastolic": 86,
+      "spO2": 97,
+      "bodyTemp": 36.9,
+      "hydration": 62
+    }
+  },
+  {
+    "id": "crew_4",
+    "name": "Eng. Alex Kumar",
+    "role": "Flight Propulsion Specialist",
+    "age": 34,
+    "nationality": "ISRO / India",
+    "avatar": "AK",
+    "healthScore": 84,
+    "fatigueLevel": 38,
+    "sleepHours": 6.8,
+    "stressScore": 51,
+    "radiationDose": 89.4,
+    "currentTask": "Ion Drive Telemetry Diagnostics",
+    "taskRisk": "Medium",
+    "status": "Nominal",
+    "baseline": {
+      "heartRate": 58,
+      "systolic": 114,
+      "diastolic": 74,
+      "spO2": 99,
+      "bodyTemp": 36.7,
+      "hydration": 77,
+      "boneDensity": 100,
+      "vo2Max": 50
+    },
+    "currentVitals": {
+      "heartRate": 65,
+      "systolic": 121,
+      "diastolic": 77,
+      "spO2": 98,
+      "bodyTemp": 36.8,
+      "hydration": 73
+    }
+  }
+]

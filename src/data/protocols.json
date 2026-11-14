@@ -1,0 +1,301 @@
+[
+  {
+    "id": "chest_pain",
+    "name": "Acute Chest Pain / Angina Protocol",
+    "keywords": ["chest pain", "tight chest", "heart racing", "angina", "sternal pressure", "left arm pain", "crushing chest"],
+    "severity": "Critical",
+    "likelyCauses": [
+      "Microgravity cardiac remodeling with coronary vasospasm",
+      "Pericarditis secondary to cosmic radiation induced inflammation",
+      "Precordial musculoskeletal strain from EVA tether / exercise harness",
+      "Atypical acute coronary syndrome (ACS)"
+    ],
+    "vitalSignsCorrelation": {
+      "heartRate": ">105 bpm or severe bradycardia <45 bpm",
+      "bloodPressure": "Systolic >145 mmHg or diastolic drop",
+      "stress": ">75"
+    },
+    "stepByStepActions": [
+      "1. HALT all physical exercise or mission activity immediately; move to tethered recumbent rest.",
+      "2. Administer supplemental oxygen via portable breathing apparatus (PBA) at 4 L/min.",
+      "3. Attach 12-lead Bio-Monitor harness; initiate continuous telemetry recording.",
+      "4. Assess pain character: if tearing pain radiating to back, suspect aortic stress; if sharp with inspiration, suspect pericarditis.",
+      "5. If ischemic pain suspected: Chew 1x Aspirin 325 mg (Med Kit Alpha).",
+      "6. If systolic BP > 100 mmHg: Administer Nitroglycerin sublingual spray (0.4 mg) under tongue. DO NOT repeat if BP drops <90 mmHg.",
+      "7. Flag emergency packet for immediate Earth DTN relay with highest priority queue."
+    ],
+    "recommendedMeds": [
+      { "id": "med_aspirin", "name": "Aspirin 325mg (Chewable)", "dose": "325 mg chew once", "required": true },
+      { "id": "med_nitro", "name": "Nitroglycerin Sublingual Spray 0.4mg", "dose": "1 spray (0.4mg) under tongue", "required": false },
+      { "id": "med_o2", "name": "Portable O2 Mask", "dose": "4 L/min high flow", "required": true }
+    ],
+    "telemetryPriority": "CRITICAL",
+    "groundNotification": "Immediate High-Priority Transmit to Flight Surgeon"
+  },
+  {
+    "id": "headache",
+    "name": "Cephalic Congestion & Intracranial Pressure Headache",
+    "keywords": ["headache", "head throbbing", "sinus pressure", "head fullness", "migraine", "temple pain"],
+    "severity": "Medium",
+    "likelyCauses": [
+      "Cephalad fluid shift (~2 liters of fluid shifting headward in microgravity)",
+      "Elevated ambient spacecraft CO2 partial pressure (pCO2 > 3.0 mmHg)",
+      "Neck/cervical muscle rigidity from microgravity neutral body posture",
+      "Dehydration with compensatory cerebral venous engorgement"
+    ],
+    "vitalSignsCorrelation": {
+      "hydration": "<60%",
+      "fluidShift": "Cephalad Index > +1.5",
+      "bloodPressure": "Elevated diastolic pressure"
+    },
+    "stepByStepActions": [
+      "1. Verify Life Support (ECLSS) environmental panel: check CO2 scrubber ppm. If >3.5 mmHg, notify Flight Engineer to swap LiOH canisters.",
+      "2. Apply lower body negative pressure (LBNP) garment (Chibis suit) at -25 mmHg for 30 minutes to draw fluid caudal.",
+      "3. Hydrate with 500 mL electrolyte-fortified oral rehydration solution over 20 minutes.",
+      "4. Perform cervical spine active range of motion and occipital trigger point release.",
+      "5. Administer Ibuprofen 400 mg with food/liquid. Reassess pain score in 45 minutes."
+    ],
+    "recommendedMeds": [
+      { "id": "med_ibuprofen", "name": "Ibuprofen 400mg", "dose": "400 mg PO with meal/snack", "required": true },
+      { "id": "med_electrolytes", "name": "Oral Rehydration Salts (ORS)", "dose": "1 packet in 500ml H2O", "required": true }
+    ],
+    "telemetryPriority": "ROUTINE",
+    "groundNotification": "Batch Telemetry Sync"
+  },
+  {
+    "id": "nausea_sms",
+    "name": "Space Motion Sickness (SMS) / Vestibular Disorientation",
+    "keywords": ["nausea", "throwing up", "vomit", "dizzy", "space sickness", "stomach awareness", "motion sickness", "vertigo"],
+    "severity": "Medium",
+    "likelyCauses": [
+      "Vestibular neuro-sensory conflict (otolith vs semicircular canals in 0G)",
+      "Cerebral fluid pooling affecting vestibular nuclei",
+      "Visual-vestibular mismatch during module transit / rapid head turns"
+    ],
+    "vitalSignsCorrelation": {
+      "heartRate": "Labile autonomic fluctuations",
+      "bodyTemp": "Mild diaphoresis or subnormal skin temp",
+      "hydration": "Declining due to emesis"
+    },
+    "stepByStepActions": [
+      "1. Limit angular head movements. Keep gaze fixed on a rigid spacecraft reference frame.",
+      "2. Prepare emesis bag with interior absorbent liner in crew pocket.",
+      "3. First-line pharmacotherapy: Administer Promethazine 25 mg IM (preferred to bypass delayed gastric emptying) or oral if mild.",
+      "4. If Promethazine unavailable: Administer Ondansetron (Zofran) 4-8 mg ODT (oral dissolving tablet).",
+      "5. Anchor astronaut in crew quarters sleeping berth with gentle torso strap tension to restore tactile orientation.",
+      "6. Sip 250 mL electrolyte solution every 30 minutes once emesis subsides."
+    ],
+    "recommendedMeds": [
+      { "id": "med_promethazine", "name": "Promethazine 25mg IM / Oral", "dose": "25 mg injection or oral", "required": true },
+      { "id": "med_ondansetron", "name": "Ondansetron 4mg ODT", "dose": "4 mg sublingual dissolvable", "required": false },
+      { "id": "med_emesis_bag", "name": "Emesis Collection Bags", "dose": "1 unit accessible", "required": true }
+    ],
+    "telemetryPriority": "HIGH",
+    "groundNotification": "Log in daily medical summary"
+  },
+  {
+    "id": "vision_blur_sans",
+    "name": "Spaceflight Associated Neuro-ocular Syndrome (SANS) / Vision Blur",
+    "keywords": ["vision blur", "blurry eyes", "cotton wool spots", "eye strain", "trouble focusing", "optic disc", "sans"],
+    "severity": "High",
+    "likelyCauses": [
+      "Chronic cephalad venous hypertension leading to optic disc edema (papilledema)",
+      "Posterior globe flattening and choroidal folds",
+      "Hyperopic shift (loss of near vision) induced by microgravity"
+    ],
+    "vitalSignsCorrelation": {
+      "fluidShift": "High cephalad index > +2.0",
+      "missionDay": ">30 days cumulative exposure"
+    },
+    "stepByStepActions": [
+      "1. Perform fundoscopy using the handheld digital ophthalmoscope on right and left eyes; capture high-res optic nerve images.",
+      "2. Conduct visual acuity test card check (near and distance acuity at 40 cm and 3 m).",
+      "3. Measure intraocular pressure (IOP) using Tono-Pen if available.",
+      "4. Increase daily Lower Body Negative Pressure (LBNP) protocol to 2x 45-minute sessions.",
+      "5. Adjust prescription reading glasses by +0.50 to +1.00 diopter as temporary refraction countermeasure.",
+      "6. Schedule prioritized retinal scan upload to Ground Flight Surgeons."
+    ],
+    "recommendedMeds": [
+      { "id": "med_lubricant_drops", "name": "Preservative-Free Artificial Tears", "dose": "1-2 drops OU q4h", "required": true },
+      { "id": "med_acetazolamide", "name": "Acetazolamide 250mg (Conditional)", "dose": "250 mg PO if severe papilledema", "required": false }
+    ],
+    "telemetryPriority": "HIGH",
+    "groundNotification": "Next High-Rate Uplink Window"
+  },
+  {
+    "id": "back_pain",
+    "name": "Microgravity Spinal Elongation & Lumbar Strain",
+    "keywords": ["back pain", "spine pain", "lower back ache", "lumbar spasm", "tall back", "vertebral ache"],
+    "severity": "Low",
+    "likelyCauses": [
+      "Spinal intervertebral disc decompression and fluid imbibition (astronaut height increase 4-7 cm)",
+      "Paraspinal muscle deep-tissue strain without gravitational axial load",
+      "Postural fatigue from neutral body posture (NBP) ergonomics"
+    ],
+    "vitalSignsCorrelation": {
+      "sleep": "<60 quality index",
+      "stress": "Elevated muscular tone"
+    },
+    "stepByStepActions": [
+      "1. Perform fetal tuck posture: curl knees to chest using hand straps for 15 minutes to decompress facet joints.",
+      "2. Adjust crew sleep station restraints: tighten axial elastic straps to provide gentle axial loading during sleep.",
+      "3. Apply transcutaneous electrical nerve stimulation (TENS) unit or thermal heat wrap to lumbar region for 20 minutes.",
+      "4. Administer Naproxen 250 mg or Acetaminophen 500 mg.",
+      "5. Modify today's ARED deadlift / squat prescription to 60% resistance with strict neutral spinal alignment."
+    ],
+    "recommendedMeds": [
+      { "id": "med_naproxen", "name": "Naproxen 250mg", "dose": "250 mg PO twice daily with food", "required": true },
+      { "id": "med_heat_patch", "name": "Therapeutic Heat Pack", "dose": "1 patch applied to lumbar", "required": false }
+    ],
+    "telemetryPriority": "ROUTINE",
+    "groundNotification": "Routine Daily Log"
+  },
+  {
+    "id": "dehydration",
+    "name": "Hypovolemia & Dehydration Syndrome",
+    "keywords": ["dehydration", "thirsty", "dry mouth", "dark urine", "lightheaded", "dizzy when standing", "cramps"],
+    "severity": "Medium",
+    "likelyCauses": [
+      "Attenuated thirst perception due to central venous baroreceptor reset in microgravity",
+      "Cumulative fluid deficit from rigorous 2.5 hr daily exercise sessions",
+      "Spaceflight diuresis / natriuresis adaptation"
+    ],
+    "vitalSignsCorrelation": {
+      "heartRate": "Resting HR >85 bpm",
+      "bloodPressure": "Orthostatic systolic drop >15 mmHg",
+      "hydration": "<55%"
+    },
+    "stepByStepActions": [
+      "1. Measure urine specific gravity using test dipstick strip from Medical Kit Bravo.",
+      "2. Calculate fluid deficit: initiate 1.5 liters electrolyte water intake spaced evenly over next 3 hours.",
+      "3. Ingest balanced salt tablets (1.0 g NaCl) with each 500 mL water pouch.",
+      "4. Suspend high-intensity aerobic exercise until urine color index is <3 (pale straw).",
+      "5. Monitor resting heart rate trend on Dashboard until baseline recovery."
+    ],
+    "recommendedMeds": [
+      { "id": "med_electrolytes", "name": "Oral Rehydration Salts (ORS)", "dose": "2 packets in 1000ml H2O", "required": true },
+      { "id": "med_salt_tabs", "name": "Sodium Chloride 1g Tablets", "dose": "1 tablet with full water pouch", "required": false }
+    ],
+    "telemetryPriority": "HIGH",
+    "groundNotification": "Batch Telemetry Sync"
+  },
+  {
+    "id": "infection",
+    "name": "Microbial Infection / Spaceflight Immune Dysregulation",
+    "keywords": ["fever", "infection", "skin rash", "boil", "sore throat", "cough", "pus", "wound redness", "chills"],
+    "severity": "High",
+    "likelyCauses": [
+      "Reactivation of latent herpesviruses (EBV, VZV, CMV) driven by immune T-cell suppression",
+      "Bacterial biofilm proliferation on skin/equipment under microgravity conditions",
+      "Upper respiratory viral transmission in closed-loop environmental air"
+    ],
+    "vitalSignsCorrelation": {
+      "bodyTemp": ">38.0 °C (100.4 °F)",
+      "heartRate": ">95 bpm resting",
+      "stress": "High physiological load"
+    },
+    "stepByStepActions": [
+      "1. Isolate crew member to personal crew quarters; don N95/surgical mask during shared cabin transit.",
+      "2. Cleanse and disinfect lesion/wound area with Betadine povidone-iodine swab.",
+      "3. Obtain biological sample swab; insert into onboard bio-analyzer cartridge for pathogen identification.",
+      "4. If bacterial skin/soft tissue infection suspected: Initiate Cephalexin 500 mg PO every 6 hours.",
+      "5. If viral fever: Administer Acetaminophen 650 mg q6h for pyrexia control.",
+      "6. Increase air exchange filtration cycle on cabin ventilation HEPA filters."
+    ],
+    "recommendedMeds": [
+      { "id": "med_antibiotic", "name": "Cephalexin 500mg", "dose": "500 mg PO q6h x 7 days", "required": true },
+      { "id": "med_acetaminophen", "name": "Acetaminophen 500mg", "dose": "1000 mg PO q6h prn fever", "required": true },
+      { "id": "med_betadine", "name": "Povidone-Iodine Swabs", "dose": "Topical application to wound", "required": true }
+    ],
+    "telemetryPriority": "HIGH",
+    "groundNotification": "Priority Medical Consultation Packet"
+  },
+  {
+    "id": "anxiety",
+    "name": "Acute Psychological Stress & Mission Isolation Distress",
+    "keywords": ["anxiety", "panic", "hyperventilating", "overwhelmed", "claustrophobia", "isolation panic", "heart racing panic"],
+    "severity": "Medium",
+    "likelyCauses": [
+      "Earth out-of-view phenomenon (loss of Earth visibility causes profound cognitive isolation)",
+      "Confinement stress in 85 m³ pressurized volume with mission operational friction",
+      "Autonomic sympathetic hyperactivity with sensory deprivation"
+    ],
+    "vitalSignsCorrelation": {
+      "stress": ">80 index",
+      "heartRate": ">100 bpm resting with sinus tachycardia",
+      "sleep": "<50 index"
+    },
+    "stepByStepActions": [
+      "1. Activate Guided Box-Breathing module immediately: 4s inhale, 4s hold, 4s exhale, 4s hold for 5 minutes.",
+      "2. Initiate noise-canceling headphones with auditory green noise or Earth nature ambient soundscape.",
+      "3. Conduct 15-minute VR Earth nature immersion (forest walk / ocean swell simulation).",
+      "4. Flag crew commander for non-punitive mission task workload reduction for 24 hours.",
+      "5. If severe acute panic: Administer Lorazepam 0.5-1.0 mg sublingual (requires Commander authorization)."
+    ],
+    "recommendedMeds": [
+      { "id": "med_lorazepam", "name": "Lorazepam 0.5mg (Controlled Locker)", "dose": "0.5 mg SL as needed for acute panic", "required": false },
+      { "id": "med_melatonin", "name": "Melatonin 3mg", "dose": "3 mg PO 30 min before rest", "required": true }
+    ],
+    "telemetryPriority": "MEDIUM",
+    "groundNotification": "Private Mental Health Telemetry Sync"
+  },
+  {
+    "id": "insomnia",
+    "name": "Circadian Rhythm Disruption & Space Insomnia",
+    "keywords": ["insomnia", "cant sleep", "sleep trouble", "waking up", "exhausted", "circadian mismatch", "fatigue"],
+    "severity": "Medium",
+    "likelyCauses": [
+      "Lack of 24-hour solar diurnal cycle (spacecraft experiences 16 sunrises/day in LEO or static artificial lighting in transit)",
+      "Acoustic noise pollution from life support fans, pumps, and avionics (approx 58-65 dBA)",
+      "Microgravity hyperarousal and lack of bed contact pressure"
+    ],
+    "vitalSignsCorrelation": {
+      "sleep": "<45 score",
+      "stress": ">65 score"
+    },
+    "stepByStepActions": [
+      "1. Switch cabin lighting to Solid-State LED Blue-Depleted Circadian Mode (warm 2700K spectrum) 90 min before sleep.",
+      "2. Verify crew berth acoustic seal; insert silicone earplugs and don light-blocking eye mask.",
+      "3. Ingest Melatonin 3 mg 45 minutes prior to target sleep period.",
+      "4. If sleep latency exceeds 90 minutes for 3 consecutive nights: Administer Zolpidem (Ambien) 5 mg PO.",
+      "5. Prohibit caffeine and stimulative stimulants within 8 hours of scheduled sleep window."
+    ],
+    "recommendedMeds": [
+      { "id": "med_melatonin", "name": "Melatonin 3mg", "dose": "3 mg PO 45 min before sleep", "required": true },
+      { "id": "med_zolpidem", "name": "Zolpidem 5mg (Controlled)", "dose": "5 mg PO prn sleep latency >90 min", "required": false }
+    ],
+    "telemetryPriority": "ROUTINE",
+    "groundNotification": "Daily Circadian Log"
+  },
+  {
+    "id": "radiation_exposure",
+    "name": "Acute Solar Particle Event (SPE) / Radiation Sickness",
+    "keywords": ["radiation", "solar flare", "nausea radiation", "vomiting weakness", "high dose", "proton storm", "spe"],
+    "severity": "Critical",
+    "likelyCauses": [
+      "Coronal Mass Ejection (CME) producing intense Solar Energetic Particle (SEP) flux",
+      "Shielding penetration causing Acute Radiation Syndrome (ARS) prodromal phase",
+      "High linear energy transfer (LET) cosmic ray ionizing damage"
+    ],
+    "vitalSignsCorrelation": {
+      "radiation": ">150 mSv cumulative or instantaneous rate >25 mSv/hr",
+      "bodyTemp": "Elevated inflammatory response",
+      "hydration": "Rapidly dropping"
+    },
+    "stepByStepActions": [
+      "1. SOUND CABIN SPE ALARM: All crew immediately evacuate to Water-Shielded Storm Shelter Vault (Module 04).",
+      "2. Seal storm shelter hatch; verify active water ballast tank perimeter shielding is fully deployed.",
+      "3. Fasten personal operational dosimeters (RAD-DOS) to chest; record baseline millisievert counter reading.",
+      "4. Administer prophylactic Ondansetron 8 mg ODT to suppress prodromal emesis and dehydration.",
+      "5. Administer Antioxidant / Radioprotector cocktail (Amifostine analog / High-dose N-Acetylcysteine + Vitamin C/E).",
+      "6. Remain inside shielded sanctuary until Mission Control / Onboard Dosimeter confirms solar proton flux has dropped below 10 pfu (protons/cm²-s-sr)."
+    ],
+    "recommendedMeds": [
+      { "id": "med_ondansetron", "name": "Ondansetron 8mg ODT", "dose": "8 mg dissolvable tablet immediately", "required": true },
+      { "id": "med_radioprotectant", "name": "Radioprotectant Antioxidant Complex", "dose": "2 capsules q12h", "required": true },
+      { "id": "med_potassium_iodide", "name": "Potassium Iodide 130mg", "dose": "130 mg PO if reactor release", "required": false }
+    ],
+    "telemetryPriority": "CRITICAL",
+    "groundNotification": "Continuous Emergency Telemetry Burst"
+  }
+]
