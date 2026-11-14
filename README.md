@@ -1,8 +1,5 @@
-# Mangal Health Sentinel 🚀
-### Autonomous Offline-First AI Health Monitoring System for Long-Duration Mars Missions
-**Team Mission Mangal 2.0 · Nagpur, India**  
-*NASA Space Apps Challenge: "Create Health Monitoring Software for Astronauts on Space Missions"*
 
+<<<<<<< HEAD
 ![Mission Mangal 2.0 Emblem](/public/assets/mission-mangal-logo.png)
 
 ---
@@ -213,3 +210,5 @@ npm run build
  #   M i s s i o n - M a n g a l - 2 . 0  
  #   M i s s i o n - M a n g a l - 2 . 0  
  
+=======
+>>>>>>> 5a078e51cfebfae2119ee0e15d7a426ed53677a5
