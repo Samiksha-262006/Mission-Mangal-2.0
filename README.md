@@ -37,14 +37,14 @@ During an interplanetary voyage to Mars (180 days one-way; 3-year total mission 
 ## ✨ Key Features & Capabilities
 
 ### 🩺 1. Astronaut Health Dashboard
-- **Biometric Telemetry HUD:** Real-time pulse, blood pressure, $\text{SpO}_2$, core temperature, hydration, and bone density metrics.
+- **Biometric Telemetry HUD:** Real-time pulse, blood pressure, SpO₂, core temperature, hydration, and bone density metrics.
 - **3D Interactive Body Scanner:** WebGL astronaut model with pulsing anatomical hotspots (Heart, Lungs, Brain, Eyes, Bone Structure, Liver) linked to physiological diagnostic filters.
 - **Radial Health Index (0–100):** Real-time composite score with drill-down breakdown of individual risk penalties.
 - **Contactless rPPG Camera Scanner:** Uses webcam computer vision and facial region-of-interest (ROI) photoplethysmography to measure heart rate without physical sensors.
 
 ### 👨‍⚕️ 2. Doctor / Flight Surgeon Review
 - **Multi-Crew Triage Board:** Real-time crew vitals with status color-coding (Nominal, Watch, Critical).
-- **Baseline Drift Detection:** Automated $Z$-score statistical monitoring ($|Z| \ge 1.8\sigma$) comparing current metrics against astronaut pre-flight baselines.
+- **Baseline Drift Detection:** Automated Z-score statistical monitoring (|Z| ≥ 1.8σ) comparing current metrics against astronaut pre-flight baselines.
 - **7-Day Risk Heatmap:** Multi-hazard risk matrix tracking individual exposure to microgravity, radiation, hypoxia, and fatigue.
 - **Radiation Transit Gauge:** Live tracking against the 250 mSv safe mission threshold.
 - **Privacy Enforcement:** Mental health and private sleep journals are shielded until explicitly unsealed by astronaut consent or emergency override.
@@ -56,7 +56,7 @@ During an interplanetary voyage to Mars (180 days one-way; 3-year total mission 
 - **Emergency Orders Protocol:** Instant action commands for Storm Shelter Evacuation, Mandatory Crew Rest, and DTN Communication Checks.
 
 ### 🛡️ 4. Admin Control Room & Cryptographic Ledger
-- **Telemetry Relay Map:** Nagpur Deep Space Ground Station ($\text{Nagpur DSN} \leftrightarrow \text{Spacecraft}$) radio link monitor with live signal transit delay calculation.
+- **Telemetry Relay Map:** Nagpur Deep Space Ground Station (Nagpur DSN ↔ Spacecraft) radio link monitor with live signal transit delay calculation.
 - **System Health Gauges:** Avionics memory allocation, client IndexedDB storage, and offline telemetry buffer metrics.
 - **Cryptographic Audit Log:** Tamper-evident ledger logging authentication events, consent toggles, and emergency overrides.
 - **Identity & Role Management:** Quick toggle access controls and role-based privilege assignments.
@@ -277,7 +277,7 @@ Mission Mangal 2.0/
    ```bash
    npm run dev
    ```
-   Open your browser at **`http://localhost:3000/`** (or the alternative port displayed in the terminal).
+   Open your browser at **`http://localhost:3000/`** (or the alternative port displayed in your terminal).
 
 5. **Build for Production:**
    ```bash
@@ -312,7 +312,7 @@ AstroMed Sentinel includes a **Mission Simulator Control Bar** at the bottom of 
 
 - **Three Integrated Languages:** Switch between English, **Hindi (हिंदी)**, and **Marathi (मराठी)** using the language selector in the top bar. All clinical terms feature simplified vernacular explanations.
 - **Low-Glare Mode:** Reduces high-frequency cyan light to reduce ocular strain during sleep-shift rotations.
-- **Tactical Red Mode:** Shifts the entire interface palette to deep red wavelengths ($\ge 650\text{ nm}$) to preserve crew dark adaptation during emergency EVA preparation or power-conservation modes.
+- **Tactical Red Mode:** Shifts the entire interface palette to deep red wavelengths (≥ 650 nm) to preserve crew dark adaptation during emergency EVA preparation or power-conservation modes.
 - **Accessible Fallbacks:** Automatically detects if WebGL is unavailable or if `prefers-reduced-motion` is enabled, rendering clean 2D vector diagrams without performance degradation.
 
 ---
