@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Mission-Mars_Transit_180_Days-ff5722?style=for-the-badge&logo=nasa" alt="Mission" />
+  <img src="https://img.shields.io/badge/Mission-Example:Mars_Transit_180_Days-ff5722?style=for-the-badge&logo=nasa" alt="Mission" />
   <img src="https://img.shields.io/badge/Architecture-Edge_First_Avionics-00C2FF?style=for-the-badge" alt="Edge Architecture" />
   <img src="https://img.shields.io/badge/Sync-Firebase_RTDB-F58220?style=for-the-badge&logo=firebase" alt="Firebase RTDB" />
   <img src="https://img.shields.io/badge/Security-PBKDF2_%7C_AES--GCM-10B981?style=for-the-badge" alt="Security" />
