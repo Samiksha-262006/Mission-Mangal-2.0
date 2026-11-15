@@ -23,7 +23,7 @@
 
 ## 🌌 The Mission Challenge
 
-During an interplanetary voyage to Mars (180 days one-way; 3-year total mission cycle), astronauts face an unforgiving environment:
+During an interplanetary voyage to Mission (like 180 days one-way; 3-year total mission cycle), astronauts face an unforgiving environment:
 - **Cardiovascular & Orthostatic Deconditioning:** Microgravity causes blood and body fluids to shift cephalad (headward).
 - **Spaceflight-Associated Neuro-ocular Syndrome (SANS):** Increased intracranial pressure causes optic disc swelling and vision changes.
 - **Bone & Muscle Loss:** Trabecular bone resorption (1.0%–1.5% per month) and musculoskeletal atrophy.
