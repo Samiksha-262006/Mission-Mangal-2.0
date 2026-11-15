@@ -7,6 +7,7 @@ import { useMissionStore } from '../store/useMissionStore';
 import { useAuthStore } from '../auth/session';
 import { encryptJournalNote, decryptJournalNote } from '../auth/hash';
 import { soundEngine } from '../utils/audio';
+import { GoogleMentalCoherenceDiagram, GoogleCrewBiometricRhythmDiagram } from '../components/BiometricDiagrams3D';
 
 export default function MindCognitionPage() {
   const {
@@ -370,20 +371,24 @@ export default function MindCognitionPage() {
                 {pvtHistory.map((item) => (
                   <div
                     key={item.id}
-                    className="p-3 rounded-xl bg-space-900 border border-slate-800 font-mono text-xs flex items-center justify-between"
+                    className="p-3 rounded-xl bg-space-900 border border-slate-800 font-mono text-xs space-y-1.5"
                   >
-                    <div>
-                      <span className="text-slate-400 text-[10px]">Sol {item.day}</span>
-                      <div className="text-white font-bold">{item.meanRt} ms mean</div>
-                      <span className="text-[10px] text-slate-400">{item.lapses} lapse(s)</span>
-                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-slate-400 text-[10px]">Sol {item.day}</span>
+                        <div className="text-white font-bold">{item.meanRt} ms mean</div>
+                        <span className="text-[10px] text-slate-400">{item.lapses} lapse(s)</span>
+                      </div>
 
-                    <div className="text-right">
-                      <span className={`text-base font-extrabold ${item.score >= 90 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                        {item.score}%
-                      </span>
-                      <span className="text-[10px] text-slate-400 block">Readiness</span>
+                      <div className="text-right">
+                        <span className={`text-base font-extrabold ${item.score >= 90 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                          {item.score}%
+                        </span>
+                        <span className="text-[10px] text-slate-400 block">Readiness</span>
+                      </div>
                     </div>
+                    {/* Google mental coherence mini diagram */}
+                    <GoogleMentalCoherenceDiagram score={item.score} isLocked={false} height={48} />
                   </div>
                 ))}
               </div>
@@ -403,6 +408,8 @@ export default function MindCognitionPage() {
             <span className="text-xs font-mono font-bold text-mangal-orange uppercase tracking-wider block">
               Spaceflight Affective State & Encrypted Journal
             </span>
+            {/* Google Mental Coherence brainwave diagram */}
+            <GoogleMentalCoherenceDiagram score={75} isLocked={false} height={64} />
 
             <div>
               <label className="text-xs font-mono text-slate-400 block mb-2">Select Dominant State:</label>

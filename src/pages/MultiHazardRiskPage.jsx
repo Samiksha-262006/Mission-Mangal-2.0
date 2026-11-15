@@ -12,7 +12,8 @@ import { useLanguage } from '../i18n/LanguageContext';
 import MedicalTermTooltip from '../components/MedicalTermTooltip';
 import { calculateHazardRisks } from '../utils/simulator';
 import { 
-  RadiationShieldDiagram3D, BoneDensityDiagram3D, FluidShiftDiagram3D 
+  RadiationShieldDiagram3D, BoneDensityDiagram3D, FluidShiftDiagram3D,
+  ImmuneSystemDiagram3D, DeepSpaceIsolationDiagram3D
 } from '../components/BiometricDiagrams3D';
 
 export default function MultiHazardRiskPage() {
@@ -241,34 +242,40 @@ export default function MultiHazardRiskPage() {
             </p>
           </div>
 
-          {/* Hazard 4 & 5 Compact Row with 3D Depth Card Pattern */}
+          {/* Hazard 4 & 5 Full Row with 3D Diagrams */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Immune System */}
-            <div className="rounded-2xl p-4 border border-slate-800 space-y-2 card-3d-hover bg-gradient-to-b from-space-900/95 via-space-950/95 to-slate-950/95 shadow-xl">
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-purple-400 shrink-0" />
-                <h3 className="font-mono font-bold text-xs text-white truncate drop-shadow">4. Immune System</h3>
+            <div className="rounded-2xl p-4 border border-slate-800 space-y-2.5 card-3d-hover bg-gradient-to-b from-space-900/95 via-space-950/95 to-slate-950/95 shadow-xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-purple-400 shrink-0" />
+                  <h3 className="font-mono font-bold text-xs text-white truncate drop-shadow">4. Immune System</h3>
+                </div>
+                <span className="text-[10px] font-mono text-purple-300 font-bold bg-purple-950/60 px-2 py-0.5 rounded border border-purple-500/40">
+                  76% Active
+                </span>
               </div>
+              <ImmuneSystemDiagram3D efficiency={76} />
               <p className="text-[11px] text-slate-300 font-sans line-clamp-2">
-                Defense cells get slightly sluggish in spaceflight.
+                Defense cells get slightly sluggish in spaceflight. Monitored for latent viral activation.
               </p>
-              <div className="text-[10px] font-mono text-purple-300 font-bold pt-1 border-t border-slate-800">
-                Defense Level: 76% (Good)
-              </div>
             </div>
 
             {/* Mental Health & Isolation */}
-            <div className="rounded-2xl p-4 border border-slate-800 space-y-2 card-3d-hover bg-gradient-to-b from-space-900/95 via-space-950/95 to-slate-950/95 shadow-xl">
-              <div className="flex items-center gap-2">
-                <Brain className="w-4 h-4 text-yellow-400 shrink-0" />
-                <h3 className="font-mono font-bold text-xs text-white truncate drop-shadow">5. Living in Deep Space</h3>
+            <div className="rounded-2xl p-4 border border-slate-800 space-y-2.5 card-3d-hover bg-gradient-to-b from-space-900/95 via-space-950/95 to-slate-950/95 shadow-xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Brain className="w-4 h-4 text-yellow-400 shrink-0" />
+                  <h3 className="font-mono font-bold text-xs text-white truncate drop-shadow">5. Living in Deep Space</h3>
+                </div>
+                <span className="text-[10px] font-mono text-yellow-300 font-bold bg-yellow-950/60 px-2 py-0.5 rounded border border-yellow-500/40">
+                  18.6m Lag
+                </span>
               </div>
+              <DeepSpaceIsolationDiagram3D stress={currentVitals.stressScore} sleep={currentVitals.sleepScore} />
               <p className="text-[11px] text-slate-300 font-sans line-clamp-2">
-                Living far away from Earth with delayed communications.
+                Living far away from Earth with delayed communications. Sol daylight synchronized.
               </p>
-              <div className="text-[10px] font-mono text-yellow-300 font-bold pt-1 border-t border-slate-800">
-                Stress: {currentVitals.stressScore}/100 • Sleep: {currentVitals.sleepScore}/100
-              </div>
             </div>
           </div>
 

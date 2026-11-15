@@ -9,6 +9,7 @@ import { useMissionStore } from '../store/useMissionStore';
 import { useLanguage } from '../i18n/LanguageContext';
 import defaultCrew from '../data/crew.json';
 import { soundEngine } from '../utils/audio';
+import { GoogleCrewBiometricRhythmDiagram } from '../components/BiometricDiagrams3D';
 
 // ─────────────────────────── WebGL / motion detection ───────────────────────
 const hasWebGL = (() => {
@@ -492,6 +493,15 @@ export default function CommanderOverviewPage() {
                     <SleepBars hours={member.sleepHours} />
                     <span className="text-[9px] text-slate-500 mt-0.5">7-night sleep log</span>
                   </div>
+                </div>
+
+                {/* Biometric sparkline */}
+                <div className="my-1.5 pt-1 border-t border-slate-800/60">
+                  <GoogleCrewBiometricRhythmDiagram
+                    hr={member.currentVitals?.heartRate || 68}
+                    fatigue={member.fatigueLevel}
+                    status={readiness.fit === 'not_fit' ? 'critical' : readiness.fit === 'caution' ? 'warning' : 'nominal'}
+                  />
                 </div>
 
                 {/* Task row */}

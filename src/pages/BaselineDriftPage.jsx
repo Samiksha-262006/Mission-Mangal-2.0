@@ -221,6 +221,19 @@ export default function BaselineDriftPage({ onOpenCalibration }) {
                     {drift.finding}
                   </p>
 
+                  {/* Gaussian Deviation Sparkline Diagram */}
+                  <div className="my-2 p-1.5 rounded-lg bg-space-950/80 border border-slate-800">
+                    <svg viewBox="0 0 160 36" className="w-full h-8">
+                      <path d="M 10,30 C 40,30 60,28 80,6 C 100,28 120,30 150,30" fill="none" stroke="#334155" strokeWidth="1.2" />
+                      <path d="M 60,30 C 70,29 75,18 80,6 C 85,18 90,29 100,30 Z" fill="#10b981" fillOpacity="0.15" />
+                      <line x1="80" y1="4" x2="80" y2="32" stroke="#10b981" strokeWidth="1" strokeDasharray="2 2" />
+                      <circle cx={Math.min(145, Math.max(15, 80 + (drift.zScore || 1.8) * 22))} cy="18" r="3.5" fill={drift.severity === 'critical' ? '#ef4444' : '#f59e0b'} className="animate-ping" />
+                      <circle cx={Math.min(145, Math.max(15, 80 + (drift.zScore || 1.8) * 22))} cy="18" r="2.5" fill={drift.severity === 'critical' ? '#ef4444' : '#f59e0b'} stroke="#ffffff" strokeWidth="0.8" />
+                      <text x="80" y="34" textAnchor="middle" fontSize="6" fill="#94a3b8" fontFamily="monospace">NORMAL</text>
+                      <text x={Math.min(145, Math.max(15, 80 + (drift.zScore || 1.8) * 22))} y="10" textAnchor="middle" fontSize="6.5" fill={drift.severity === 'critical' ? '#ef4444' : '#f59e0b'} fontFamily="monospace" fontWeight="bold">DRIFT {drift.zScore}σ</text>
+                    </svg>
+                  </div>
+
                   <p className="text-xs text-slate-300 leading-relaxed font-sans mb-3 line-clamp-2">
                     {drift.clinicalInsight}
                   </p>

@@ -8,6 +8,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { soundEngine } from '../utils/audio';
 import defaultCrew from '../data/crew.json';
 import AstronautBust3D from '../three/AstronautBust3D';
+import { GoogleCrewBiometricRhythmDiagram } from '../components/BiometricDiagrams3D';
 
 export default function CrewViewPage() {
   const { crew, assignCrewTask, missionDay } = useMissionStore();
@@ -196,6 +197,14 @@ export default function CrewViewPage() {
                   }`}>
                     {member.taskRisk || 'Low'}
                   </span>
+                </div>
+                {/* Google biometric heartbeat rhythm */}
+                <div className="mt-2 pt-1.5 border-t border-slate-800/60">
+                  <GoogleCrewBiometricRhythmDiagram
+                    hr={member.currentVitals?.heartRate || 68}
+                    fatigue={member.fatigueLevel || 30}
+                    status={(member.healthScore || 85) < 70 ? 'critical' : isFatigued ? 'warning' : 'nominal'}
+                  />
                 </div>
               </div>
             </div>

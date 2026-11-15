@@ -87,23 +87,51 @@ export default function RadiationShelterPage() {
             </div>
           </div>
 
-          {/* Radiation Telemetry Row */}
+          {/* Radiation Telemetry Row with Diagrams */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
-            <div className="p-3 rounded-xl bg-space-950/90 border border-slate-800 text-center">
+            {/* Radiation Rate Card with Particle Flux Diagram */}
+            <div className="p-3 rounded-xl bg-space-950/90 border border-slate-800 flex flex-col items-center justify-between">
               <span className="text-[9px] text-slate-400 block uppercase">Radiation Rate</span>
-              <span className={`text-lg font-bold block ${isSolarFlare && !stormShelterEvacuated ? 'text-red-400 animate-pulse' : 'text-cyan-300'}`}>
+              <div className="w-full h-8 my-1 flex items-center justify-center">
+                <svg viewBox="0 0 100 30" className="w-full h-full">
+                  <path d="M 5,15 Q 25,5 45,20 T 85,10" fill="none" stroke={isSolarFlare && !stormShelterEvacuated ? '#ef4444' : '#06b6d4'} strokeWidth="1.8" />
+                  <circle cx="45" cy="20" r="3" fill={isSolarFlare && !stormShelterEvacuated ? '#ef4444' : '#06b6d4'} className="animate-ping" />
+                </svg>
+              </div>
+              <span className={`text-base font-bold block ${isSolarFlare && !stormShelterEvacuated ? 'text-red-400 animate-pulse' : 'text-cyan-300'}`}>
                 {isSolarFlare 
                   ? (stormShelterEvacuated ? '180 μSv/h' : '14,250 μSv/h') 
                   : '~8 μSv/h'}
               </span>
             </div>
-            <div className="p-3 rounded-xl bg-space-950/90 border border-slate-800 text-center">
+
+            {/* Total Radiation with Dosimeter Arc Diagram */}
+            <div className="p-3 rounded-xl bg-space-950/90 border border-slate-800 flex flex-col items-center justify-between">
               <span className="text-[9px] text-slate-400 block uppercase">{t('totalRadiation')}</span>
-              <span className="text-lg font-bold text-mangal-gold block">{currentVitals.cumulativeRadiation} mSv</span>
+              <div className="w-full h-8 my-1 flex items-center justify-center">
+                <svg viewBox="0 0 60 26" className="w-16 h-full">
+                  <path d="M 6,24 A 24,24 0 0,1 54,24" fill="none" stroke="#1e293b" strokeWidth="4" strokeLinecap="round" />
+                  <path d="M 6,24 A 24,24 0 0,1 32,8" fill="none" stroke="#f59e0b" strokeWidth="4" strokeLinecap="round" />
+                  <circle cx="30" cy="24" r="2.5" fill="#ffffff" />
+                </svg>
+              </div>
+              <span className="text-base font-bold text-mangal-gold block">{currentVitals.cumulativeRadiation} mSv</span>
             </div>
-            <div className="p-3 rounded-xl bg-space-950/90 border border-slate-800 text-center">
-              <span className="text-[9px] text-slate-400 block uppercase">Water Wall</span>
-              <span className="text-lg font-bold text-emerald-400 block">45 g/cm² H₂O</span>
+
+            {/* Water Wall with Layered Barrier Diagram */}
+            <div className="p-3 rounded-xl bg-space-950/90 border border-slate-800 flex flex-col items-center justify-between">
+              <span className="text-[9px] text-slate-400 block uppercase">Water Wall Barrier</span>
+              <div className="w-full h-8 my-1 flex items-center justify-center">
+                <svg viewBox="0 0 80 26" className="w-20 h-full">
+                  <rect x="10" y="4" width="60" height="18" rx="3" fill="#0284c7" fillOpacity="0.4" stroke="#38bdf8" strokeWidth="1" />
+                  <line x1="25" y1="4" x2="25" y2="22" stroke="#38bdf8" strokeWidth="1" strokeDasharray="2 2" />
+                  <line x1="45" y1="4" x2="45" y2="22" stroke="#38bdf8" strokeWidth="1" strokeDasharray="2 2" />
+                  <circle cx="18" cy="13" r="2" fill="#38bdf8" />
+                  <circle cx="35" cy="13" r="2" fill="#38bdf8" />
+                  <circle cx="55" cy="13" r="2" fill="#38bdf8" />
+                </svg>
+              </div>
+              <span className="text-base font-bold text-emerald-400 block">45 g/cm² H₂O</span>
             </div>
           </div>
 

@@ -16,6 +16,15 @@ import defaultCrew from '../data/crew.json';
 import { soundEngine } from '../utils/audio';
 import { logAuditEvent } from '../auth/audit';
 import EmergencyOverrideModal from '../components/EmergencyOverrideModal';
+import {
+  GoogleCardiacRhythmDiagram,
+  GoogleArterialPressureDiagram,
+  GoogleOxygenCapillaryDiagram,
+  GoogleRadiationDosimeterDiagram,
+  GoogleMentalCoherenceDiagram,
+  GoogleCrewBiometricRhythmDiagram,
+  GooglePharmacologyDiagram
+} from '../components/BiometricDiagrams3D';
 
 // ─── Card tilt handlers ───────────────────────────────────────────────────────
 const handleMouseMove = (e) => {
@@ -187,6 +196,22 @@ function VitalCard({ label, value, unit, baseValue, max, statusColor, tooltip })
             </div>
           )}
         </div>
+      </div>
+
+      {/* Embedded Google Health / Fit Visual Diagram */}
+      <div className="mt-2 pt-1.5 border-t border-slate-800/80">
+        {label.toLowerCase().includes('heart') && (
+          <GoogleCardiacRhythmDiagram bpm={typeof value === 'number' ? value : 76} delta={delta || 0} status={statusColor === '#ef4444' ? 'critical' : 'nominal'} />
+        )}
+        {label.toLowerCase().includes('pressure') && (
+          <GoogleArterialPressureDiagram sys={typeof value === 'number' ? value : 120} dia={82} baseSys={baseValue || 116} />
+        )}
+        {label.toLowerCase().includes('oxygen') && (
+          <GoogleOxygenCapillaryDiagram spo2={typeof value === 'number' ? value : 98} />
+        )}
+        {label.toLowerCase().includes('radiation') && (
+          <GoogleRadiationDosimeterDiagram dose={typeof value === 'number' ? value : 84} max={max || 250} />
+        )}
       </div>
     </div>
   );
@@ -605,6 +630,10 @@ export default function DoctorPatientReviewPage() {
                     <div>Health: <strong className="text-white">{member.healthScore}%</strong></div>
                     <div>Tiredness: <strong className={member.fatigueLevel > 60 ? 'text-red-400' : 'text-cyan-300'}>{member.fatigueLevel}%</strong></div>
                   </div>
+                  {/* Google Fit style mini cardiac rhythm */}
+                  <div className="mt-1.5 pt-1 border-t border-slate-800/60">
+                    <GoogleCrewBiometricRhythmDiagram hr={member.currentVitals?.heartRate || 68} fatigue={member.fatigueLevel || 30} status={risk.toLowerCase()} />
+                  </div>
                 </div>
               );
             })}
@@ -750,6 +779,10 @@ export default function DoctorPatientReviewPage() {
               </span>
             </div>
 
+            <div className="mb-3">
+              <GoogleMentalCoherenceDiagram score={patient.stressScore ? (100 - patient.stressScore) : 78} isLocked={!hasMentalHealthConsent} />
+            </div>
+
             {hasMentalHealthConsent ? (
               <div className="space-y-2 text-xs font-mono text-slate-200">
                 <div className="p-3 rounded-xl bg-space-950 border border-slate-800 space-y-1">
@@ -830,6 +863,15 @@ export default function DoctorPatientReviewPage() {
                 <Pill className="w-4 h-4 text-cyan-400" />
                 <h3 className="font-mono font-bold text-xs text-white">Prescribe from Medical Kit</h3>
               </div>
+
+              {/* Mechanism of Action Diagram */}
+              <div className="my-1.5">
+                <GooglePharmacologyDiagram
+                  medName={inventory.find(i => i.id === prescribeMedId)?.name || 'Aspirin'}
+                  category={inventory.find(i => i.id === prescribeMedId)?.category || 'Cardiovascular'}
+                />
+              </div>
+
               <form onSubmit={handlePrescribeMed} className="space-y-2 font-mono text-xs">
                 <div>
                   <label className="text-slate-300 text-[10px] block mb-1">Select Medicine in Stock:</label>

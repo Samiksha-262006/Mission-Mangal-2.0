@@ -1,13 +1,159 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import * as THREE from 'three';
 import { 
   Plus, Search, AlertTriangle, 
   CheckCircle2, Clock, MapPin, Edit2, Minus, X, RefreshCw,
-  Package, XCircle, ShieldAlert, Sparkles, HelpCircle, Layers
+  Package, XCircle, ShieldAlert, Sparkles, HelpCircle, Layers,
+  Heart, Zap, Info, ChevronRight, ArrowRight
 } from 'lucide-react';
 import { useMissionStore } from '../store/useMissionStore';
 import { useLanguage } from '../i18n/LanguageContext';
 import { soundEngine } from '../utils/audio';
 import VisualCard from '../components/VisualCard';
+
+// ─── WebGL & Reduced Motion Detection ────────────────────────────────────────
+const hasWebGL = (() => {
+  try {
+    const c = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext && c.getContext('webgl'));
+  } catch (e) { return false; }
+})();
+const prefersReducedMotion =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const use3D = hasWebGL && !prefersReducedMotion;
+
+// ─── 3D Rotating Medical Kit Scene (THREE.js) ────────────────────────────────
+function MedKit3DScene() {
+  const mountRef = useRef(null);
+
+  useEffect(() => {
+    const container = mountRef.current;
+    if (!container) return;
+    const width = container.clientWidth;
+    const height = container.clientHeight || 180;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+    camera.position.set(0, 2.2, 4.2);
+    camera.lookAt(0, 0, 0);
+
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      container.appendChild(renderer.domElement);
+    } catch (e) {
+      return;
+    }
+
+    const group = new THREE.Group();
+    scene.add(group);
+
+    // Lights
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+    const cyanLight = new THREE.DirectionalLight(0x06b6d4, 1.8);
+    cyanLight.position.set(3, 4, 3);
+    scene.add(cyanLight);
+
+    const redGlow = new THREE.PointLight(0xef4444, 1.5, 6);
+    redGlow.position.set(0, 0.5, 0);
+    scene.add(redGlow);
+
+    // Case bottom (main tray)
+    const baseMat = new THREE.MeshStandardMaterial({ 
+      color: 0x0f172a, 
+      roughness: 0.25, 
+      metalness: 0.85 
+    });
+    const base = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.3, 1.6), baseMat);
+    group.add(base);
+
+    // Open Lid angled backward
+    const lid = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 1.6), baseMat);
+    lid.position.set(0, 0.75, -0.68);
+    lid.rotation.x = -Math.PI / 3;
+    group.add(lid);
+
+    // Red Cross Emblem on Lid
+    const crossMat = new THREE.MeshStandardMaterial({ 
+      color: 0xef4444, 
+      emissive: 0xef4444, 
+      emissiveIntensity: 1.2 
+    });
+    const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.12, 0.02), crossMat);
+    crossH.position.set(0, 0.77, -0.67);
+    crossH.rotation.x = -Math.PI / 3;
+    group.add(crossH);
+    const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.55, 0.02), crossMat);
+    crossV.position.set(0, 0.77, -0.67);
+    crossV.rotation.x = -Math.PI / 3;
+    group.add(crossV);
+
+    // Internal compartments with glowing medication slots
+    const slotColors = [0x10b981, 0x06b6d4, 0x10b981, 0xf59e0b, 0x06b6d4, 0x10b981];
+    for (let row = 0; row < 2; row++) {
+      for (let col = 0; col < 3; col++) {
+        const slotColor = slotColors[row * 3 + col];
+        const slotMat = new THREE.MeshStandardMaterial({
+          color: 0x1e293b,
+          emissive: slotColor,
+          emissiveIntensity: 0.75,
+          roughness: 0.3
+        });
+        const slot = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.16, 0.64), slotMat);
+        slot.position.set((col - 1) * 0.72, 0.12, (row - 0.5) * 0.72);
+        group.add(slot);
+      }
+    }
+
+    let animId;
+    const animate = () => {
+      animId = requestAnimationFrame(animate);
+      group.rotation.y += 0.007;
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const onResize = () => {
+      if (!container) return;
+      camera.aspect = container.clientWidth / (container.clientHeight || 180);
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight || 180);
+    };
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      window.removeEventListener('resize', onResize);
+      cancelAnimationFrame(animId);
+      if (container && renderer?.domElement && container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
+      renderer?.dispose();
+    };
+  }, []);
+
+  return <div ref={mountRef} className="w-full h-full" />;
+}
+
+// 2D SVG Fallback for Med Kit
+function MedKitFallbackSVG() {
+  return (
+    <div className="w-full h-full flex items-center justify-center p-2">
+      <svg viewBox="0 0 200 120" className="w-full h-40 max-w-xs" fill="none">
+        <rect x="20" y="30" width="160" height="80" rx="8" fill="#0f172a" stroke="#06b6d4" strokeWidth="2" />
+        <path d="M75 30 Q100 10 125 30" stroke="#06b6d4" strokeWidth="2" fill="none" />
+        <rect x="85" y="45" width="30" height="10" rx="2" fill="#ef4444" />
+        <rect x="95" y="35" width="10" height="30" rx="2" fill="#ef4444" />
+        <rect x="30" y="70" width="30" height="30" rx="4" fill="#1e293b" stroke="#10b981" strokeWidth="1.5" />
+        <rect x="68" y="70" width="30" height="30" rx="4" fill="#1e293b" stroke="#06b6d4" strokeWidth="1.5" />
+        <rect x="106" y="70" width="30" height="30" rx="4" fill="#1e293b" stroke="#10b981" strokeWidth="1.5" />
+        <rect x="144" y="70" width="26" height="30" rx="4" fill="#1e293b" stroke="#f59e0b" strokeWidth="1.5" />
+      </svg>
+    </div>
+  );
+}
 
 // ─── Item Type Detection & Inline SVG Icons ──────────────────────────────────
 function getItemType(item) {
@@ -33,7 +179,6 @@ function getItemType(item) {
   return 'tablet';
 }
 
-// 1. Tablet / Capsule Icon (Pill with division and sheen)
 function TabletIcon({ className = "w-5 h-5", color = "#06b6d4" }) {
   return (
     <svg viewBox="0 0 36 36" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -50,7 +195,6 @@ function TabletIcon({ className = "w-5 h-5", color = "#06b6d4" }) {
   );
 }
 
-// 2. Sublingual / Aerosol Spray Canister Icon
 function SprayIcon({ className = "w-5 h-5", color = "#38bdf8" }) {
   return (
     <svg viewBox="0 0 36 36" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -66,7 +210,6 @@ function SprayIcon({ className = "w-5 h-5", color = "#38bdf8" }) {
   );
 }
 
-// 3. Injectable Syringe / Ampoule Icon
 function InjectionIcon({ className = "w-5 h-5", color = "#f43f5e" }) {
   return (
     <svg viewBox="0 0 36 36" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -81,7 +224,6 @@ function InjectionIcon({ className = "w-5 h-5", color = "#f43f5e" }) {
   );
 }
 
-// 4. Oxygen Mask & Regulator Icon
 function OxygenMaskIcon({ className = "w-5 h-5", color = "#10b981" }) {
   return (
     <svg viewBox="0 0 36 36" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -94,7 +236,6 @@ function OxygenMaskIcon({ className = "w-5 h-5", color = "#10b981" }) {
   );
 }
 
-// 5. Saline IV Bag / Rehydration Icon
 function SalineIcon({ className = "w-5 h-5", color = "#06b6d4" }) {
   return (
     <svg viewBox="0 0 36 36" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -108,7 +249,6 @@ function SalineIcon({ className = "w-5 h-5", color = "#06b6d4" }) {
   );
 }
 
-// 6. Bandage / Sterile Dressing Icon
 function BandageIcon({ className = "w-5 h-5", color = "#f59e0b" }) {
   return (
     <svg viewBox="0 0 36 36" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -173,7 +313,7 @@ function StockRing({ stock, minThreshold, unit }) {
   const pct = Math.min(Math.max(stock / maxStock, 0), 1);
   
   const r = 21;
-  const circ = 2 * Math.PI * r; // ~131.95
+  const circ = 2 * Math.PI * r;
   const strokeDash = pct * circ;
   
   const strokeColor = isOut ? '#ef4444' : isLow ? '#f59e0b' : '#10b981';
@@ -182,14 +322,7 @@ function StockRing({ stock, minThreshold, unit }) {
   return (
     <div className="relative flex items-center justify-center shrink-0">
       <svg width="54" height="54" viewBox="0 0 54 54" className="transform -rotate-90">
-        <circle
-          cx="27"
-          cy="27"
-          r={r}
-          fill="none"
-          stroke="#1e293b"
-          strokeWidth="4"
-        />
+        <circle cx="27" cy="27" r={r} fill="none" stroke="#1e293b" strokeWidth="4" />
         <circle
           cx="27"
           cy="27"
@@ -281,6 +414,81 @@ function ExpiryBar({ expiryDate }) {
   );
 }
 
+// ─── Top-6 "What This Treats" Symptom Chips ──────────────────────────────────
+const SYMPTOM_CHIPS = [
+  { id: 'chest_pain', label: 'Chest Pain', icon: '❤️', keywords: ['aspirin', 'nitroglycerin'] },
+  { id: 'nausea', label: 'Nausea & SMS', icon: '🤢', keywords: ['promethazine', 'ondansetron'] },
+  { id: 'dehydration', label: 'Dehydration', icon: '💧', keywords: ['rehydration', 'ors', 'saline'] },
+  { id: 'breathing', label: 'Breathing Trouble', icon: '🫁', keywords: ['oxygen', 'mask', 'regulator'] },
+  { id: 'pain', label: 'Pain & Headache', icon: '💊', keywords: ['ibuprofen', 'aspirin', 'paracetamol'] },
+  { id: 'radiation', label: 'Radiation Risk', icon: '☢️', keywords: ['iodide', 'potassium', 'ondansetron'] },
+];
+
+// ─── Kit Layout Schematic Diagram ───────────────────────────────────────────
+function KitLayoutDiagram({ inventory, hoveredItemId, onSelectSlot }) {
+  const layoutSlots = [
+    { slotName: 'Slot 01', keyword: 'aspirin', desc: 'Oral Analgesics' },
+    { slotName: 'Slot 02', keyword: 'ibuprofen', desc: 'NSAIDs' },
+    { slotName: 'Slot 03', keyword: 'promethazine', desc: 'SMS Antiemetic' },
+    { slotName: 'Slot 04', keyword: 'ondansetron', desc: 'Radiation Antiemetic' },
+    { slotName: 'Slot 05', keyword: 'potassium', desc: 'Thyroid Protection' },
+    { slotName: 'Emergency Tray', keyword: 'nitroglycerin', desc: 'Acute Cardiac' },
+    { slotName: 'Bulkhead Bay', keyword: 'oxygen', desc: 'O₂ Life Support' },
+    { slotName: 'Galley Rack', keyword: 'rehydration', desc: 'Electrolytes' }
+  ];
+
+  return (
+    <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
+      <div className="flex items-center justify-between text-xs font-mono">
+        <span className="text-cyan-300 font-bold uppercase tracking-wider flex items-center gap-1.5">
+          <Layers className="w-4 h-4 text-cyan-400" />
+          Kit Layout Schematic (Med Kit Alpha)
+        </span>
+        <span className="text-[10px] text-slate-400">Click a compartment to highlight</span>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono text-[11px]">
+        {layoutSlots.map((slot) => {
+          const item = inventory.find(i => 
+            i.name.toLowerCase().includes(slot.keyword) || 
+            i.location.toLowerCase().includes(slot.keyword)
+          );
+          const isOut = item && item.stock === 0;
+          const isLow = item && item.stock <= item.minThreshold && !isOut;
+          const isTargeted = hoveredItemId && item && hoveredItemId === item.id;
+
+          const ringColor = isOut ? 'border-red-500/60 bg-red-950/30' :
+                            isLow ? 'border-amber-500/60 bg-amber-950/30' :
+                            'border-emerald-500/50 bg-emerald-950/20';
+
+          return (
+            <button
+              key={slot.slotName}
+              type="button"
+              onClick={() => item && onSelectSlot(item.id)}
+              className={`p-2.5 rounded-xl border text-left transition-all ${ringColor} ${
+                isTargeted ? 'ring-2 ring-cyan-400 scale-[1.03] shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'hover:border-cyan-400/80'
+              }`}
+            >
+              <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                <span className="font-semibold text-slate-300">{slot.slotName}</span>
+                <span className={`w-2 h-2 rounded-full ${isOut ? 'bg-red-400 animate-ping' : isLow ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+              </div>
+              <div className="font-bold text-white text-xs truncate">
+                {item ? item.name : slot.desc}
+              </div>
+              <div className="text-[10px] text-slate-400 mt-1 flex items-center justify-between">
+                <span>{slot.desc}</span>
+                {item && <span className="font-semibold text-cyan-300">{item.stock} left</span>}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main InventoryPage Component ────────────────────────────────────────────
 export default function InventoryPage() {
   const { 
@@ -294,6 +502,8 @@ export default function InventoryPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [activeSymptom, setActiveSymptom] = useState(null);
+  const [hoveredItemId, setHoveredItemId] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
 
@@ -316,13 +526,30 @@ export default function InventoryPage() {
   const outOfStockCount = inventory.filter((i) => i.stock === 0).length;
   const inStockCount = totalItems - lowStockCount - outOfStockCount;
 
-  // Filter items
+  // Filter items based on Search, Category, and Symptom Chip
   const filteredItems = inventory.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          item.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCat = selectedCategory === 'ALL' || item.category.toLowerCase().includes(selectedCategory.toLowerCase());
-    return matchesSearch && matchesCat;
+    const itemName = item.name.toLowerCase();
+    const itemCat = item.category.toLowerCase();
+    const itemLoc = item.location.toLowerCase();
+
+    // 1. Search Query
+    const matchesSearch = itemName.includes(searchTerm.toLowerCase()) ||
+                          itemCat.includes(searchTerm.toLowerCase()) ||
+                          itemLoc.includes(searchTerm.toLowerCase());
+
+    // 2. Category Pill
+    const matchesCat = selectedCategory === 'ALL' || itemCat.includes(selectedCategory.toLowerCase());
+
+    // 3. Symptom Chip Filter
+    let matchesSymptom = true;
+    if (activeSymptom) {
+      const chip = SYMPTOM_CHIPS.find(c => c.id === activeSymptom);
+      if (chip) {
+        matchesSymptom = chip.keywords.some(k => itemName.includes(k) || itemCat.includes(k) || (item.notes || '').toLowerCase().includes(k));
+      }
+    }
+
+    return matchesSearch && matchesCat && matchesSymptom;
   });
 
   const categories = [
@@ -394,90 +621,121 @@ export default function InventoryPage() {
     }
   };
 
+  const handleScrollToItem = (itemId) => {
+    soundEngine.playClick();
+    setHoveredItemId(itemId);
+    const element = document.getElementById(`item-card-${itemId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
   return (
-    <div className="space-y-6 overflow-x-hidden px-1 sm:px-2">
+    <div className="space-y-6 overflow-x-hidden px-1 sm:px-2 max-w-7xl mx-auto">
       
-      {/* ─── Top 4 KPI Summary Cards (Using VisualCard with mouse tilt & neon glow) ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* Total Cataloged Items */}
-        <VisualCard accent="cyan" className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-mono text-cyan-300 font-bold uppercase tracking-wider">
-              {t('totalCataloged') || 'Total Items in Kit'}
-            </span>
-            <div className="p-2 rounded-lg bg-cyan-950/80 border border-cyan-500/40 text-cyan-300">
-              <Package className="w-4 h-4" />
+      {/* ─── 1. HERO BANNER: Rotating 3D Med Kit + Stock Summary ─── */}
+      <VisualCard accent="cyan" className="p-4 sm:p-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+          
+          {/* Left: 3D Animated Medical Kit Scene */}
+          <div className="lg:col-span-5 h-48 sm:h-52 relative rounded-xl overflow-hidden bg-slate-950/80 border border-cyan-500/30 flex items-center justify-center">
+            {use3D ? <MedKit3DScene /> : <MedKitFallbackSVG />}
+            <div className="absolute bottom-2 left-3 bg-slate-900/90 rounded px-2.5 py-1 text-[10px] font-mono text-cyan-300 border border-slate-800 pointer-events-none">
+              Med Kit Alpha · 3D Avionics Tray
             </div>
           </div>
-          <div className="text-3xl font-black font-mono text-white tracking-tight">
-            {totalItems} <span className="text-xs font-semibold text-slate-400">SKUs</span>
-          </div>
-          <div className="text-[11px] font-mono text-cyan-400 mt-2 flex items-center gap-1 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-            <span>All packs ready & verified</span>
-          </div>
-        </VisualCard>
 
-        {/* In Stock & Mission Ready */}
-        <VisualCard accent="emerald" className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-mono text-emerald-300 font-bold uppercase tracking-wider">
-              {t('inStockReady') || 'In Stock & Ready'}
-            </span>
-            <div className="p-2 rounded-lg bg-emerald-950/80 border border-emerald-500/40 text-emerald-300">
-              <CheckCircle2 className="w-4 h-4" />
+          {/* Right: Stock Summary KPI Overlaid Grid */}
+          <div className="lg:col-span-7 space-y-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Package className="w-5 h-5 text-cyan-400" />
+                <h1 className="font-display font-bold text-lg sm:text-xl text-white tracking-wide drop-shadow"
+                  style={{ textShadow: '0 0 20px rgba(6,182,212,0.5)' }}>
+                  {t('medKitTitle') || 'Medicine Kit & Supplies'}
+                </h1>
+              </div>
+              <p className="text-xs text-slate-300 font-sans">
+                {t('medKitDesc') || 'Everything available on board. Tracks quantity, shelf-life and clinical indications.'}
+              </p>
+            </div>
+
+            {/* 4 Overlaid Stat Tiles */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+              <div className="p-2.5 rounded-xl bg-slate-900/80 border border-cyan-500/30">
+                <span className="text-[10px] font-mono text-cyan-300 uppercase block font-bold">Cataloged</span>
+                <div className="text-2xl font-black font-mono text-white mt-0.5">{totalItems}</div>
+                <span className="text-[9px] text-slate-400">Total SKUs</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-900/80 border border-emerald-500/30">
+                <span className="text-[10px] font-mono text-emerald-300 uppercase block font-bold">In Stock</span>
+                <div className="text-2xl font-black font-mono text-emerald-300 mt-0.5">{inStockCount}</div>
+                <span className="text-[9px] text-slate-400">Mission Ready</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-900/80 border border-amber-500/30">
+                <span className="text-[10px] font-mono text-amber-300 uppercase block font-bold">Low Stock</span>
+                <div className="text-2xl font-black font-mono text-amber-300 mt-0.5">{lowStockCount}</div>
+                <span className="text-[9px] text-slate-400">Restock Soon</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-900/80 border border-red-500/30">
+                <span className="text-[10px] font-mono text-red-300 uppercase block font-bold">Depleted</span>
+                <div className="text-2xl font-black font-mono text-red-400 mt-0.5">{outOfStockCount}</div>
+                <span className="text-[9px] text-slate-400">Substitutes On</span>
+              </div>
             </div>
           </div>
-          <div className="text-3xl font-black font-mono text-emerald-300 tracking-tight">
-            {inStockCount}
-          </div>
-          <div className="text-[11px] font-mono text-emerald-400 mt-2 flex items-center gap-1 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span>Good reserve levels</span>
-          </div>
-        </VisualCard>
 
-        {/* Low Stock Warnings */}
-        <VisualCard accent="amber" className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-mono text-amber-300 font-bold uppercase tracking-wider">
-              {t('lowStockWarning') || 'Running Low'}
-            </span>
-            <div className="p-2 rounded-lg bg-amber-950/80 border border-amber-500/40 text-amber-300">
-              <AlertTriangle className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-3xl font-black font-mono text-amber-300 tracking-tight">
-            {lowStockCount}
-          </div>
-          <div className="text-[11px] font-mono text-amber-400 mt-2 flex items-center gap-1 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-            <span>Needs restock soon</span>
-          </div>
-        </VisualCard>
+        </div>
+      </VisualCard>
 
-        {/* Depleted / Out of Stock */}
-        <VisualCard accent="red" className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-mono text-red-300 font-bold uppercase tracking-wider">
-              {t('outOfStockDepleted') || 'Out of Stock'}
-            </span>
-            <div className="p-2 rounded-lg bg-red-950/80 border border-red-500/40 text-red-300">
-              <XCircle className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-3xl font-black font-mono text-red-400 tracking-tight">
-            {outOfStockCount}
-          </div>
-          <div className="text-[11px] font-mono text-red-400 mt-2 flex items-center gap-1 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping" />
-            <span>Use substitute item</span>
-          </div>
-        </VisualCard>
-      </div>
+      {/* ─── 2. Top-6 "What This Treats" Symptom Chips ─── */}
+      <VisualCard accent="slate" className="p-3.5 space-y-2">
+        <div className="flex items-center justify-between text-xs font-mono">
+          <span className="text-slate-200 font-bold uppercase tracking-wider flex items-center gap-1.5">
+            <Heart className="w-4 h-4 text-rose-400" />
+            What This Treats (Filter by Symptom)
+          </span>
+          {activeSymptom && (
+            <button
+              onClick={() => setActiveSymptom(null)}
+              className="text-[10px] font-mono text-cyan-400 hover:text-cyan-300 underline"
+            >
+              Clear filter
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {SYMPTOM_CHIPS.map((chip) => {
+            const isSelected = activeSymptom === chip.id;
+            return (
+              <button
+                key={chip.id}
+                onClick={() => {
+                  soundEngine.playClick();
+                  setActiveSymptom(isSelected ? null : chip.id);
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-semibold flex items-center gap-1.5 whitespace-nowrap transition-all border ${
+                  isSelected
+                    ? 'bg-cyan-500/30 text-cyan-200 border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.35)] scale-105'
+                    : 'bg-slate-900/90 text-slate-300 hover:text-white border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <span>{chip.icon}</span>
+                <span>{chip.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </VisualCard>
 
-      {/* ─── Search, Filter Pills & Add Button (VisualCard) ─── */}
+      {/* ─── 3. Kit Layout Schematic Diagram ─── */}
+      <KitLayoutDiagram
+        inventory={inventory}
+        hoveredItemId={hoveredItemId}
+        onSelectSlot={handleScrollToItem}
+      />
+
+      {/* ─── 4. Search, Filter Pills & Add Button ─── */}
       <VisualCard accent="slate" className="p-4 space-y-3">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           
@@ -524,128 +782,172 @@ export default function InventoryPage() {
         </div>
       </VisualCard>
 
-      {/* ─── Inventory Items Grid (Using VisualCard with Ring, Expiry Bar, and Type Icon) ─── */}
+      {/* ─── 5. Inventory Items Grid ─── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredItems.map((item) => {
           const isOut = item.stock === 0;
           const isLow = !isOut && item.stock <= item.minThreshold;
           const cardAccent = isOut ? 'red' : isLow ? 'amber' : 'cyan';
 
+          // Find alternative item if out of stock
+          const substituteItem = isOut && item.alternatives?.length > 0 
+            ? inventory.find(i => item.alternatives.includes(i.id) && i.stock > 0)
+            : null;
+
           return (
-            <VisualCard
+            <div
               key={item.id}
-              accent={cardAccent}
-              className={`p-4 flex flex-col justify-between transition-all ${
-                isOut ? 'opacity-90' : ''
-              }`}
+              id={`item-card-${item.id}`}
+              onMouseEnter={() => setHoveredItemId(item.id)}
+              onMouseLeave={() => setHoveredItemId(null)}
             >
-              <div>
-                {/* 1. Header Row: Name + Dosage + Type Icon Badge */}
-                <div className="flex items-start justify-between gap-2 mb-2 pb-2 border-b border-slate-800/80">
-                  <div className="min-w-0 pr-1">
-                    <h4 className="font-mono font-bold text-sm text-white truncate leading-snug">
-                      {item.name}
-                    </h4>
-                    <span className="text-[11px] font-mono text-cyan-300 font-medium block">
-                      {item.dosage}
+              <VisualCard
+                accent={cardAccent}
+                className={`p-4 flex flex-col justify-between transition-all h-full ${
+                  isOut ? 'opacity-85 grayscale-[0.35]' : ''
+                } ${hoveredItemId === item.id ? 'ring-2 ring-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.35)]' : ''}`}
+              >
+                <div>
+                  {/* Header Row: Name + Dosage + Type Icon Badge */}
+                  <div className="flex items-start justify-between gap-2 mb-2 pb-2 border-b border-slate-800/80">
+                    <div className="min-w-0 pr-1">
+                      <h4 className="font-mono font-bold text-sm text-white truncate leading-snug">
+                        {item.name}
+                      </h4>
+                      <span className="text-[11px] font-mono text-cyan-300 font-medium block">
+                        {item.dosage}
+                      </span>
+                    </div>
+
+                    
+                    <ItemTypeBadge item={item} />
+                  </div>
+
+                  {/* Status Badge & Category */}
+                  <div className="flex items-center justify-between text-[11px] font-mono text-slate-300 mb-2.5">
+                    <span className="truncate">
+                      <span className="text-slate-400">Category: </span>
+                      <span className="text-white font-medium">{item.category}</span>
+                    </span>
+
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase shrink-0 border ${
+                      isOut 
+                        ? 'bg-red-500/20 text-red-300 border-red-500/50' 
+                        : isLow 
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' 
+                        : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                    }`}>
+                      {isOut ? 'Depleted' : isLow ? 'Low Stock' : 'In Stock'}
                     </span>
                   </div>
-                  
-                  {/* Item Type Badge (tablet, spray, injection, oxygen mask, etc.) */}
-                  <ItemTypeBadge item={item} />
-                </div>
 
-                {/* 2. Status Badge & Category */}
-                <div className="flex items-center justify-between text-[11px] font-mono text-slate-300 mb-3">
-                  <span className="truncate">
-                    <span className="text-slate-400">Type: </span>
-                    <span className="text-white font-medium">{item.category}</span>
-                  </span>
+                  {/* Circular Stock Ring & Stock Details */}
+                  <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/90 my-2 flex items-center gap-3">
+                    <StockRing 
+                      stock={item.stock} 
+                      minThreshold={item.minThreshold} 
+                      unit={item.unit} 
+                    />
 
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase shrink-0 border ${
-                    isOut 
-                      ? 'bg-red-500/20 text-red-300 border-red-500/50' 
-                      : isLow 
-                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' 
-                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                  }`}>
-                    {isOut ? 'Depleted' : isLow ? 'Low Stock' : 'In Stock'}
-                  </span>
-                </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] font-mono text-slate-400 uppercase">
+                        {t('availableStock') || 'Available Stock'}
+                      </div>
 
-                {/* 3. Circular Stock Ring & Stock Details Block */}
-                <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/90 my-2 flex items-center gap-3">
-                  {/* Circular Stock Ring with color & glow */}
-                  <StockRing 
-                    stock={item.stock} 
-                    minThreshold={item.minThreshold} 
-                    unit={item.unit} 
-                  />
+                      <div className={`text-base font-extrabold font-mono leading-tight ${isOut ? 'text-red-400' : isLow ? 'text-amber-300' : 'text-emerald-300'}`}>
+                        {item.stock} <span className="text-xs font-normal text-slate-300">{item.unit}</span>
+                      </div>
 
-                  {/* Stock textual details */}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[10px] font-mono text-slate-400 uppercase">
-                      {t('availableStock') || 'Available Stock'}
+                      <div className="text-[10px] font-mono text-slate-400 mt-1">
+                        Safe Minimum: <span className="text-slate-200 font-semibold">{item.minThreshold} {item.unit}</span>
+                      </div>
+
                     </div>
-                    <div className={`text-base font-extrabold font-mono leading-tight ${isOut ? 'text-red-400' : isLow ? 'text-amber-300' : 'text-emerald-300'}`}>
-                      {item.stock} <span className="text-xs font-normal text-slate-300">{item.unit}</span>
-                    </div>
-                    <div className="text-[10px] font-mono text-slate-400 mt-1">
-                      Safe Minimum: <span className="text-slate-200 font-semibold">{item.minThreshold} {item.unit}</span>
-                    </div>
+
                   </div>
-                </div>
 
-                {/* 4. Expiry Countdown Bar ("Expires in 1 year 7 months") */}
-                <div className="mt-2.5 mb-3 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/60">
-                  <ExpiryBar expiryDate={item.expiryDate} />
-                </div>
+                  {/* Out of stock recommendation card */}
+                  {isOut && (
+                    <div className="my-2 p-2.5 rounded-lg bg-red-950/50 border border-red-500/40 text-xs font-mono space-y-1">
+                      <div className="flex items-center gap-1.5 text-red-300 font-bold">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        <span>Out of Stock</span>
+                      </div>
 
-                {/* 5. Meta details: Location & Clinical Notes */}
-                <div className="space-y-1.5 text-[11px] font-mono text-slate-300">
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                    <span className="truncate text-slate-200">{item.location}</span>
-                  </div>
-                  {item.notes && (
-                    <p className="text-[10px] text-slate-300 pt-1.5 border-t border-slate-800/70 line-clamp-2 leading-relaxed">
-                      {item.notes}
-                    </p>
+                      {substituteItem ? (
+                        <div className="text-[11px] text-slate-200">
+                          <span>Use this instead: </span>
+                          <button
+                            onClick={() => handleScrollToItem(substituteItem.id)}
+                            className="text-cyan-300 underline font-bold inline-flex items-center gap-0.5 ml-1"
+                          >
+                            <span>{substituteItem.name}</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        </div>
+
+                      ) : (
+                        <div className="text-[11px] text-slate-400">
+                          Emergency stock depletion. Request Earth supply drone drop.
+                        </div>
+
+                      )}
+                    </div>
+
                   )}
+
+                  {/* Expiry Countdown Bar */}
+                  <div className="mt-2.5 mb-3 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/60">
+                    <ExpiryBar expiryDate={item.expiryDate} />
+                  </div>
+
+                  {/* Meta details: Location & Clinical Notes */}
+                  <div className="space-y-1.5 text-[11px] font-mono text-slate-300">
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                      <span className="truncate text-slate-200">{item.location}</span>
+                    </div>
+
+                    {item.notes && (
+                      <p className="text-[10px] text-slate-300 pt-1.5 border-t border-slate-800/70 line-clamp-2 leading-relaxed">
+                        {item.notes}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* 6. Action Buttons: Edit, Consume, Restock */}
-              <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
-                <button
-                  onClick={() => handleOpenEdit(item)}
-                  className="p-1.5 rounded-lg text-slate-300 hover:text-white bg-slate-900 border border-slate-700/70 hover:border-cyan-400 text-xs transition-colors"
-                  title="Edit Specifications"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                </button>
-
-                <div className="flex items-center gap-2">
+                {/* Action Buttons: Edit, Consume, Restock */}
+                <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
                   <button
-                    onClick={() => handleConsume(item.id)}
-                    disabled={item.stock === 0}
-                    className="px-2.5 py-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/50 border border-red-500/40 disabled:opacity-40 text-red-300 hover:text-red-200 font-mono text-xs font-semibold flex items-center gap-1 transition-all"
+                    onClick={() => handleOpenEdit(item)}
+                    className="p-1.5 rounded-lg text-slate-300 hover:text-white bg-slate-900 border border-slate-700/70 hover:border-cyan-400 text-xs transition-colors"
+                    title="Edit Specifications"
                   >
-                    <Minus className="w-3.5 h-3.5" />
-                    <span>{t('consumeDose') || 'Consume'}</span>
+                    <Edit2 className="w-3.5 h-3.5" />
                   </button>
 
-                  <button
-                    onClick={() => handleRestock(item.id)}
-                    className="px-2.5 py-1.5 rounded-lg bg-cyan-950/40 hover:bg-cyan-900/50 border border-cyan-500/40 text-cyan-300 hover:text-cyan-200 font-mono text-xs font-semibold flex items-center gap-1 transition-all"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>{t('restockDose') || '+5 Restock'}</span>
-                  </button>
-                </div>
-              </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleConsume(item.id)}
+                      disabled={item.stock === 0}
+                      className="px-2.5 py-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/50 border border-red-500/40 disabled:opacity-40 text-red-300 hover:text-red-200 font-mono text-xs font-semibold flex items-center gap-1 transition-all"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                      <span>{t('consumeDose') || 'Consume'}</span>
+                    </button>
 
-            </VisualCard>
+                    <button
+                      onClick={() => handleRestock(item.id)}
+                      className="px-2.5 py-1.5 rounded-lg bg-cyan-950/40 hover:bg-cyan-900/50 border border-cyan-500/40 text-cyan-300 hover:text-cyan-200 font-mono text-xs font-semibold flex items-center gap-1 transition-all"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>{t('restockDose') || '+5 Restock'}</span>
+                    </button>
+                  </div>
+                </div>
+
+              </VisualCard>
+            </div>
           );
         })}
       </div>

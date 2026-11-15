@@ -15,6 +15,7 @@ import { generateSalt, hashPassword } from '../auth/hash';
 import { useAuthStore } from '../auth/session';
 import { useLanguage } from '../i18n/LanguageContext';
 import { soundEngine } from '../utils/audio';
+import { GoogleCloudMetricSparklineDiagram, GoogleRadioLinkDiagram } from '../components/BiometricDiagrams3D';
 
 /* ─── Toggle Switch ─────────────────────────────────────── */
 function ToggleSwitch({ active, onChange }) {
@@ -155,10 +156,10 @@ const statTilesDef = [
   { label: 'Last Backup', value: '2h ago', icon: Clock, color: 'green', sub: 'Auto-backup on' },
 ];
 const tileColorMap = {
-  violet: { bg: 'bg-violet-500/10', border: 'border-violet-500/30', icon: 'text-violet-400', val: 'text-violet-200', glow: 'rgba(168,85,247,0.4)' },
-  cyan:   { bg: 'bg-cyan-500/10',   border: 'border-cyan-500/30',   icon: 'text-cyan-400',   val: 'text-cyan-200',   glow: 'rgba(34,211,238,0.4)' },
-  red:    { bg: 'bg-red-500/10',    border: 'border-red-500/30',    icon: 'text-red-400',    val: 'text-red-200',    glow: 'rgba(239,68,68,0.4)' },
-  green:  { bg: 'bg-green-500/10',  border: 'border-green-500/30',  icon: 'text-green-400',  val: 'text-green-200',  glow: 'rgba(34,197,94,0.4)' },
+  violet: { bg: 'bg-violet-500/10', border: 'border-violet-500/30', icon: 'text-violet-400', val: 'text-violet-200', glow: 'rgba(168,85,247,0.4)', sparkColor: '#a855f7' },
+  cyan:   { bg: 'bg-cyan-500/10',   border: 'border-cyan-500/30',   icon: 'text-cyan-400',   val: 'text-cyan-200',   glow: 'rgba(34,211,238,0.4)', sparkColor: '#22d3ee' },
+  red:    { bg: 'bg-red-500/10',    border: 'border-red-500/30',    icon: 'text-red-400',    val: 'text-red-200',    glow: 'rgba(239,68,68,0.4)', sparkColor: '#ef4444' },
+  green:  { bg: 'bg-green-500/10',  border: 'border-green-500/30',  icon: 'text-green-400',  val: 'text-green-200',  glow: 'rgba(34,197,94,0.4)', sparkColor: '#22c55e' },
 };
 
 /* ─── Main Component ─────────────────────────────────────── */
@@ -364,16 +365,22 @@ export default function AdminPanelPage() {
           const c = tileColorMap[tile.color];
           return (
             <TiltCard key={tile.label}
-              className={`${c.bg} border ${c.border} bg-slate-900/60 backdrop-blur-xl rounded-2xl p-4 shadow-2xl hover:border-violet-400/60 hover:shadow-violet-400/20 transition-all duration-300 cursor-default`}>
-              <div className="flex items-start justify-between mb-2">
-                <Icon className={`w-8 h-8 ${c.icon}`} />
+              className={`${c.bg} border ${c.border} bg-slate-900/60 backdrop-blur-xl rounded-2xl p-4 shadow-2xl hover:border-violet-400/60 hover:shadow-violet-400/20 transition-all duration-300 cursor-default flex flex-col justify-between`}>
+              <div>
+                <div className="flex items-start justify-between mb-2">
+                  <Icon className={`w-8 h-8 ${c.icon}`} />
+                </div>
+                <div className={`text-3xl font-bold ${c.val}`}
+                  style={{ textShadow: `0 0 20px ${c.glow}` }}>
+                  {tile.value}
+                </div>
+                <div className="text-xs text-slate-300 font-semibold mt-0.5">{tile.label}</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">{tile.sub}</div>
               </div>
-              <div className={`text-3xl font-bold ${c.val}`}
-                style={{ textShadow: `0 0 20px ${c.glow}` }}>
-                {tile.value}
+              {/* Google Cloud metric sparkline diagram */}
+              <div className="mt-2 pt-1 border-t border-slate-800/60">
+                <GoogleCloudMetricSparklineDiagram color={c.sparkColor} />
               </div>
-              <div className="text-xs text-slate-300 font-semibold mt-0.5">{tile.label}</div>
-              <div className="text-[10px] text-slate-500 mt-0.5">{tile.sub}</div>
             </TiltCard>
           );
         })}
@@ -423,34 +430,17 @@ export default function AdminPanelPage() {
       </div>
 
       {/* ─── GROUND STATION MAP ────────────────────────────── */}
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-4 shadow-2xl">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-bold text-white"
-            style={{ textShadow: '0 0 20px rgba(168,85,247,0.5)' }}>
+      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-4 shadow-2xl space-y-2">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-white" style={{ textShadow: '0 0 20px rgba(168,85,247,0.5)' }}>
             Ground Station Link
           </h3>
-          <div className="flex items-center gap-2 text-xs font-mono">
-            <span className="text-slate-400">Link status:</span>
-            <span className="flex items-center gap-1 text-green-400">
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block" />
-              Active
-            </span>
-          </div>
+          <span className="flex items-center gap-1 text-xs font-mono text-green-400">
+            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block" />
+            Active
+          </span>
         </div>
-        <svg viewBox="0 0 400 100" className="w-full" style={{ maxHeight: 120 }}>
-          <rect width="400" height="100" fill="#0f172a" rx="12" />
-          <circle cx="60" cy="50" r="22" fill="#1e3a5f" stroke="#6366f1" strokeWidth="2" />
-          <text x="60" y="54" textAnchor="middle" fontSize="10" fill="#a5b4fc">🛰 DSN</text>
-          <circle cx="340" cy="50" r="18" fill="#1e1e3a" stroke="#06b6d4" strokeWidth="2" />
-          <text x="340" y="54" textAnchor="middle" fontSize="10" fill="#67e8f9">🚀</text>
-          <line x1="82" y1="50" x2="322" y2="50" stroke="#6366f1" strokeWidth="1.5" strokeDasharray="6 4" />
-          <circle r="4" fill="#a855f7">
-            <animateMotion dur="2s" repeatCount="indefinite" path="M82,50 L322,50" />
-          </circle>
-          <text x="60" y="82" textAnchor="middle" fontSize="8" fill="#94a3b8">Nagpur, India</text>
-          <text x="340" y="78" textAnchor="middle" fontSize="8" fill="#94a3b8">Mangal-2</text>
-          <text x="200" y="30" textAnchor="middle" fontSize="9" fill="#6366f1">Signal delay: ~18.6 min</text>
-        </svg>
+        <GoogleRadioLinkDiagram />
       </div>
 
       {/* ─── SYSTEM HEALTH GAUGES ──────────────────────────── */}

@@ -214,6 +214,11 @@ function AppContent() {
   const location = useLocation();
   const { initializeAuth, isAuthenticated, isLocked, lockTerminal, currentUser } = useAuthStore();
 
+  // Initialize Firebase Realtime Database Sync
+  useEffect(() => {
+    useMissionStore.getState().initFirebaseSync();
+  }, []);
+
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);

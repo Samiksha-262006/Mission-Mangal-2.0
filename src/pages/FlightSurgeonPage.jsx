@@ -9,6 +9,64 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { runMedicalTriage, initSpeechRecognition, speakText, stopSpeech } from '../utils/triage';
 import { soundEngine } from '../utils/audio';
 
+// Visual Clinical Mechanism Diagram for Triage Diagnostic Cards
+function TriageDiagram({ triage }) {
+  const text = ((triage.title || '') + ' ' + (triage.category || '')).toLowerCase();
+  
+  if (text.includes('cardiac') || text.includes('chest') || text.includes('heart') || text.includes('angina')) {
+    return (
+      <div className="my-2 p-2 rounded-xl bg-space-950/90 border border-rose-500/30">
+        <div className="text-[9px] font-mono text-rose-400 font-bold mb-1">CARDIAC TELEMETRY DIAGRAM</div>
+        <svg viewBox="0 0 160 36" className="w-full h-9">
+          <path d="M 5,20 L 35,20 L 42,8 L 48,32 L 56,4 L 64,28 L 70,20 L 110,20 L 116,9 L 122,30 L 128,6 L 135,26 L 140,20 L 155,20" fill="none" stroke="#f43f5e" strokeWidth="1.8" />
+          <circle cx="56" cy="4" r="3" fill="#f43f5e" className="animate-ping" />
+        </svg>
+      </div>
+    );
+  }
+  
+  if (text.includes('motion') || text.includes('vestibular') || text.includes('nausea') || text.includes('sms')) {
+    return (
+      <div className="my-2 p-2 rounded-xl bg-space-950/90 border border-amber-500/30">
+        <div className="text-[9px] font-mono text-amber-400 font-bold mb-1">VESTIBULAR OTOLITH DISORIENTATION</div>
+        <svg viewBox="0 0 160 36" className="w-full h-9">
+          <circle cx="80" cy="18" r="14" fill="#1e293b" stroke="#f59e0b" strokeWidth="1.2" />
+          <path d="M 68,18 C 72,10 88,10 92,18 C 88,26 72,26 68,18 Z" fill="#f59e0b" fillOpacity="0.3" stroke="#f59e0b" strokeWidth="1" />
+          <circle cx="80" cy="18" r="3" fill="#fbbf24" className="animate-pulse" />
+          <line x1="40" y1="18" x2="65" y2="18" stroke="#38bdf8" strokeWidth="1" strokeDasharray="2 2" />
+          <line x1="95" y1="18" x2="120" y2="18" stroke="#38bdf8" strokeWidth="1" strokeDasharray="2 2" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (text.includes('radiation') || text.includes('solar') || text.includes('storm')) {
+    return (
+      <div className="my-2 p-2 rounded-xl bg-space-950/90 border border-red-500/30">
+        <div className="text-[9px] font-mono text-red-400 font-bold mb-1">IONIZING PROTON PENETRATION</div>
+        <svg viewBox="0 0 160 36" className="w-full h-9">
+          <rect x="70" y="6" width="16" height="24" rx="2" fill="#0369a1" stroke="#38bdf8" strokeWidth="1" />
+          <path d="M 10,12 L 68,12" stroke="#ef4444" strokeWidth="1.5" />
+          <circle cx="68" cy="12" r="2.5" fill="#ef4444" className="animate-ping" />
+          <path d="M 10,24 L 75,24" stroke="#f59e0b" strokeWidth="1.5" />
+          <rect x="100" y="6" width="50" height="24" rx="2" fill="#0f172a" stroke="#10b981" strokeWidth="1" />
+          <text x="125" y="21" fill="#10b981" fontSize="7" textAnchor="middle" fontFamily="monospace">HAVEN</text>
+        </svg>
+      </div>
+    );
+  }
+
+  return (
+    <div className="my-2 p-2 rounded-xl bg-space-950/90 border border-cyan-500/30">
+      <div className="text-[9px] font-mono text-cyan-400 font-bold mb-1">PHYSIOLOGICAL COHERENCE WAVEFORM</div>
+      <svg viewBox="0 0 160 36" className="w-full h-9">
+        <path d="M 10,18 Q 30,5 50,18 T 90,18 T 130,18 T 150,18" fill="none" stroke="#00f2fe" strokeWidth="1.5" />
+        <circle cx="90" cy="18" r="3" fill="#00f2fe" className="animate-pulse" />
+      </svg>
+    </div>
+  );
+}
+
 export default function FlightSurgeonPage() {
   const { t } = useLanguage();
   const { 

@@ -1,4 +1,7 @@
 import { create } from 'zustand';
+import { ref, set as fbSet, get as fbGet, onValue } from 'firebase/database';
+import { db } from '../firebase';
+import { clean, toList, safeId, toObjectMap } from '../utils/firebaseHelpers';
 import { generateVitalsForDay } from '../utils/simulator';
 import defaultInventory from '../data/inventory.json';
 import defaultCrew from '../data/crew.json';
@@ -16,6 +19,87 @@ const DEFAULT_BASELINE = {
   hydration: 78,
   boneDensity: 100,
   vo2Max: 52
+};
+
+// Module-level guard to ensure Firebase sync runs only once
+let isFirebaseSyncInitialized = false;
+
+// Helper to sync list-based collections (stored in Firebase as objects keyed by ID)
+const syncListCollection = async (collectionPath, defaultItems, sortFn, onUpdate) => {
+  try {
+    const colRef = ref(db, collectionPath);
+    try {
+      const snap = await fbGet(colRef);
+      if (!snap.exists() || snap.val() === null) {
+        const initialMap = toObjectMap(defaultItems);
+        await fbSet(colRef, clean(initialMap));
+      }
+    } catch (seedErr) {
+      console.error(`Firebase sync failed (${collectionPath} seeding):`, seedErr);
+    }
+
+    onValue(
+      colRef,
+      (snap) => {
+        try {
+          const val = snap.val();
+          if (val === null || val === undefined) {
+            // Keep default data if null
+            return;
+          }
+          let list = toList(val);
+          if (sortFn) {
+            list = sortFn(list);
+          }
+          if (list) {
+            onUpdate(list);
+          }
+        } catch (err) {
+          console.error(`Firebase sync failed (${collectionPath} onValue):`, err);
+        }
+      },
+      (subErr) => {
+        console.error(`Firebase sync failed (${collectionPath} subscription):`, subErr);
+      }
+    );
+  } catch (err) {
+    console.error(`Firebase sync failed (${collectionPath} setup):`, err);
+  }
+};
+
+// Helper to sync single object collections (profile, baseline)
+const syncObjectCollection = async (path, defaultData, onUpdate) => {
+  try {
+    const objRef = ref(db, path);
+    try {
+      const snap = await fbGet(objRef);
+      if (!snap.exists() || snap.val() === null) {
+        await fbSet(objRef, clean(defaultData));
+      }
+    } catch (seedErr) {
+      console.error(`Firebase sync failed (${path} seeding):`, seedErr);
+    }
+
+    onValue(
+      objRef,
+      (snap) => {
+        try {
+          const val = snap.val();
+          if (val === null || val === undefined) {
+            return;
+          }
+          onUpdate(val);
+        } catch (err) {
+          console.error(`Firebase sync failed (${path} onValue):`, err);
+        }
+      },
+      (subErr) => {
+        console.error(`Firebase sync failed (${path} subscription):`, subErr);
+      }
+    );
+  } catch (err) {
+    console.error(`Firebase sync failed (${path} setup):`, err);
+  }
 };
 
 export const useMissionStore = create((set, get) => ({
@@ -133,23 +217,160 @@ export const useMissionStore = create((set, get) => ({
   ],
 
   // ----------------------------------------
+  // FIREBASE INITIALIZATION ACTION
+  // ----------------------------------------
+  initFirebaseSync: () => {
+    if (isFirebaseSyncInitialized) return;
+    isFirebaseSyncInitialized = true;
+
+    const state = get();
+
+    // 1. inventory -> "inventory/<id>"
+    syncListCollection(
+      'inventory',
+      defaultInventory,
+      (items) => {
+        const orderMap = new Map(defaultInventory.map((item, idx) => [item.id, idx]));
+        return items.sort((a, b) => {
+          const idxA = orderMap.has(a.id) ? orderMap.get(a.id) : 9999;
+          const idxB = orderMap.has(b.id) ? orderMap.get(b.id) : 9999;
+          if (idxA !== idxB) return idxA - idxB;
+          return (a.name || '').localeCompare(b.name || '');
+        });
+      },
+      (inventory) => set({ inventory })
+    );
+
+    // 2. crew -> "crew/<id>"
+    syncListCollection(
+      'crew',
+      defaultCrew,
+      (items) => {
+        const orderMap = new Map(defaultCrew.map((item, idx) => [item.id, idx]));
+        return items.sort((a, b) => {
+          const idxA = orderMap.has(a.id) ? orderMap.get(a.id) : 9999;
+          const idxB = orderMap.has(b.id) ? orderMap.get(b.id) : 9999;
+          return idxA - idxB;
+        });
+      },
+      (crew) => set({ crew })
+    );
+
+    // 3. journalEntries -> "journalEntries/<id>"
+    syncListCollection(
+      'journalEntries',
+      state.journalEntries,
+      (items) => {
+        return items.sort((a, b) => {
+          const tA = new Date(a.timestamp || 0).getTime() || Number(a.id) || 0;
+          const tB = new Date(b.timestamp || 0).getTime() || Number(b.id) || 0;
+          return tB - tA; // Newest first
+        });
+      },
+      (journalEntries) => set({ journalEntries })
+    );
+
+    // 4. pvtHistory -> "pvtHistory/<id>"
+    syncListCollection(
+      'pvtHistory',
+      state.pvtHistory,
+      (items) => {
+        return items.sort((a, b) => {
+          const dA = Number(a.day) || Number(a.id) || 0;
+          const dB = Number(b.day) || Number(b.id) || 0;
+          return dA - dB;
+        });
+      },
+      (pvtHistory) => set({ pvtHistory })
+    );
+
+    // 5. completedWorkouts -> "completedWorkouts/<id>"
+    syncListCollection(
+      'completedWorkouts',
+      state.completedWorkouts,
+      (items) => {
+        return items.sort((a, b) => {
+          const idA = Number(a.id) || (a.day ? a.day * 100 : 0);
+          const idB = Number(b.day) || (b.day ? b.day * 100 : 0);
+          return idB - idA; // Newest first
+        });
+      },
+      (completedWorkouts) => set({ completedWorkouts })
+    );
+
+    // 6. chatMessages -> "chatMessages/<id>"
+    syncListCollection(
+      'chatMessages',
+      state.chatMessages,
+      (items) => {
+        return items.sort((a, b) => {
+          if (a.id === 'welcome_msg') return -1;
+          if (b.id === 'welcome_msg') return 1;
+          return String(a.id).localeCompare(String(b.id));
+        });
+      },
+      (chatMessages) => set({ chatMessages })
+    );
+
+    // 7. profile -> "profile"
+    syncObjectCollection(
+      'profile',
+      state.profile,
+      (profile) => set({ profile })
+    );
+
+    // 8. baseline -> "baseline"
+    syncObjectCollection(
+      'baseline',
+      state.baseline,
+      (baseline) => set((s) => ({
+        baseline,
+        currentVitals: generateVitalsForDay(s.missionDay, baseline, s.activeEvents)
+      }))
+    );
+  },
+
+  // ----------------------------------------
   // ACTIONS & REDUCERS
   // ----------------------------------------
 
   // Update Astronaut Profile / Baseline
   updateProfile: (newProfile) => {
-    set((state) => ({ profile: { ...state.profile, ...newProfile } }));
+    let mergedProfile = null;
+    set((state) => {
+      mergedProfile = { ...state.profile, ...newProfile };
+      return { profile: mergedProfile };
+    });
+    if (mergedProfile) {
+      try {
+        fbSet(ref(db, 'profile'), clean(mergedProfile)).catch((err) => {
+          console.error('Firebase sync failed (updateProfile):', err);
+        });
+      } catch (err) {
+        console.error('Firebase sync failed (updateProfile):', err);
+      }
+    }
   },
 
   updateBaseline: (newBaseline) => {
+    let mergedBaseline = null;
     set((state) => {
-      const mergedBaseline = { ...state.baseline, ...newBaseline };
+      mergedBaseline = { ...state.baseline, ...newBaseline };
       const newVitals = generateVitalsForDay(state.missionDay, mergedBaseline, state.activeEvents);
       return {
         baseline: mergedBaseline,
         currentVitals: newVitals
       };
     });
+    if (mergedBaseline) {
+      try {
+        fbSet(ref(db, 'baseline'), clean(mergedBaseline)).catch((err) => {
+          console.error('Firebase sync failed (updateBaseline):', err);
+        });
+      } catch (err) {
+        console.error('Firebase sync failed (updateBaseline):', err);
+      }
+    }
   },
 
   // Mission Day Stepper / Timeline
@@ -159,7 +380,7 @@ export const useMissionStore = create((set, get) => ({
     const newVitals = generateVitalsForDay(safeDay, baseline, activeEvents);
 
     // Update history up to current day
-    const updatedHistory = Array.from({ length: safeDay }, (_, i) => 
+    const updatedHistory = Array.from({ length: safeDay }, (_, i) =>
       generateVitalsForDay(i + 1, baseline, activeEvents)
     );
 
@@ -313,39 +534,90 @@ export const useMissionStore = create((set, get) => ({
 
   // Medical Kit CRUD Actions
   consumeInventoryItem: (itemId, count = 1) => {
+    let targetItem = null;
     set((state) => {
       const updated = state.inventory.map((item) => {
         if (item.id === itemId) {
           const newStock = Math.max(0, item.stock - count);
-          return {
+          targetItem = {
             ...item,
             stock: newStock,
             status: newStock === 0 ? 'Out of Stock' : newStock <= item.minThreshold ? 'Low Stock' : 'In Stock'
           };
+          return targetItem;
         }
         return item;
       });
       return { inventory: updated };
     });
+
+    if (targetItem) {
+      try {
+        const key = safeId(targetItem.id);
+        fbSet(ref(db, `inventory/${key}`), clean(targetItem)).catch((err) => {
+          console.error('Firebase sync failed (consumeInventoryItem):', err);
+        });
+      } catch (err) {
+        console.error('Firebase sync failed (consumeInventoryItem):', err);
+      }
+    }
   },
 
   addInventoryItem: (newItem) => {
+    const itemWithId = { ...newItem, id: newItem.id || `med_${Date.now()}` };
     set((state) => ({
-      inventory: [...state.inventory, { ...newItem, id: `med_${Date.now()}` }]
+      inventory: [...state.inventory, itemWithId]
     }));
+    try {
+      const key = safeId(itemWithId.id);
+      fbSet(ref(db, `inventory/${key}`), clean(itemWithId)).catch((err) => {
+        console.error('Firebase sync failed (addInventoryItem):', err);
+      });
+    } catch (err) {
+      console.error('Firebase sync failed (addInventoryItem):', err);
+    }
   },
 
   updateInventoryItem: (itemId, updates) => {
+    let targetItem = null;
     set((state) => ({
-      inventory: state.inventory.map((item) => (item.id === itemId ? { ...item, ...updates } : item))
+      inventory: state.inventory.map((item) => {
+        if (item.id === itemId) {
+          targetItem = { ...item, ...updates };
+          return targetItem;
+        }
+        return item;
+      })
     }));
+    if (targetItem) {
+      try {
+        const key = safeId(targetItem.id);
+        fbSet(ref(db, `inventory/${key}`), clean(targetItem)).catch((err) => {
+          console.error('Firebase sync failed (updateInventoryItem):', err);
+        });
+      } catch (err) {
+        console.error('Firebase sync failed (updateInventoryItem):', err);
+      }
+    }
   },
 
   // Chat Messages
   addChatMessage: (msg) => {
+    const newMsg = {
+      ...msg,
+      id: msg.id || `msg_${Date.now()}`
+    };
     set((state) => ({
-      chatMessages: [...state.chatMessages, { ...msg, id: `msg_${Date.now()}` }]
+      chatMessages: [...state.chatMessages, newMsg]
     }));
+    try {
+      const key = safeId(newMsg.id);
+      fbSet(ref(db, `chatMessages/${key}`), clean(newMsg)).catch((err) => {
+        console.error('Firebase sync failed (addChatMessage):', err);
+      });
+    } catch (err) {
+      console.error('Firebase sync failed (addChatMessage):', err);
+    }
   },
 
   // DTN & Earth Sync
@@ -397,54 +669,88 @@ export const useMissionStore = create((set, get) => ({
 
   // Crew Task Assignment
   assignCrewTask: (crewId, task, taskRisk) => {
+    let targetMember = null;
     set((state) => ({
       crew: state.crew.map((member) => {
         if (member.id === crewId) {
-          return { ...member, currentTask: task, taskRisk };
+          targetMember = { ...member, currentTask: task, taskRisk };
+          return targetMember;
         }
         return member;
       })
     }));
+    if (targetMember) {
+      try {
+        const key = safeId(targetMember.id);
+        fbSet(ref(db, `crew/${key}`), clean(targetMember)).catch((err) => {
+          console.error('Firebase sync failed (assignCrewTask):', err);
+        });
+      } catch (err) {
+        console.error('Firebase sync failed (assignCrewTask):', err);
+      }
+    }
   },
 
   // Mind & Cognition Additions
   addPvtResult: (result) => {
+    const newPvt = {
+      id: Date.now(),
+      day: get().missionDay,
+      ...result
+    };
     set((state) => ({
-      pvtHistory: [
-        ...state.pvtHistory,
-        { id: Date.now(), day: state.missionDay, ...result }
-      ]
+      pvtHistory: [...state.pvtHistory, newPvt]
     }));
+    try {
+      const key = safeId(newPvt.id);
+      fbSet(ref(db, `pvtHistory/${key}`), clean(newPvt)).catch((err) => {
+        console.error('Firebase sync failed (addPvtResult):', err);
+      });
+    } catch (err) {
+      console.error('Firebase sync failed (addPvtResult):', err);
+    }
   },
 
   addJournalEntry: (entry) => {
+    const newEntry = {
+      id: Date.now(),
+      day: get().missionDay,
+      timestamp: new Date().toISOString(),
+      ...entry
+    };
     set((state) => ({
-      journalEntries: [
-        {
-          id: Date.now(),
-          day: state.missionDay,
-          timestamp: new Date().toISOString(),
-          ...entry
-        },
-        ...state.journalEntries
-      ]
+      journalEntries: [newEntry, ...state.journalEntries]
     }));
+    try {
+      const key = safeId(newEntry.id);
+      fbSet(ref(db, `journalEntries/${key}`), clean(newEntry)).catch((err) => {
+        console.error('Firebase sync failed (addJournalEntry):', err);
+      });
+    } catch (err) {
+      console.error('Firebase sync failed (addJournalEntry):', err);
+    }
   },
 
   setMentalHealthSync: (mode) => set({ mentalHealthGroundSync: mode }),
 
   // Workout Log
   logWorkout: (workout) => {
+    const newWorkout = {
+      id: Date.now(),
+      day: get().missionDay,
+      ...workout
+    };
     set((state) => ({
-      completedWorkouts: [
-        {
-          id: Date.now(),
-          day: state.missionDay,
-          ...workout
-        },
-        ...state.completedWorkouts
-      ]
+      completedWorkouts: [newWorkout, ...state.completedWorkouts]
     }));
+    try {
+      const key = safeId(newWorkout.id);
+      fbSet(ref(db, `completedWorkouts/${key}`), clean(newWorkout)).catch((err) => {
+        console.error('Firebase sync failed (logWorkout):', err);
+      });
+    } catch (err) {
+      console.error('Firebase sync failed (logWorkout):', err);
+    }
   },
 
   // Dismiss Alert

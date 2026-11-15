@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useMissionStore } from '../store/useMissionStore';
 import { soundEngine } from '../utils/audio';
+import { GoogleTelemetryWaveformDiagram } from '../components/BiometricDiagrams3D';
 
 export default function AlertsCenterPage() {
   const navigate = useNavigate();
@@ -137,6 +138,10 @@ export default function AlertsCenterPage() {
                 }`}
               >
                 <div className="space-y-1.5 flex-1">
+                  {/* Google Telemetry Waveform diagram per alert */}
+                  <div className="mb-2">
+                    <GoogleTelemetryWaveformDiagram category={alert.category} severity={alert.severity} />
+                  </div>
                   <div className="flex items-center gap-2">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
                       isCrit 

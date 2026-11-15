@@ -13,7 +13,10 @@ import AstronautBodyScanner3D from '../three/AstronautBodyScanner3D';
 import MedicalTermTooltip from '../components/MedicalTermTooltip';
 import { 
   HeartDiagram3D, SpO2Diagram3D, BloodPressureDiagram3D, 
-  BodyTempDiagram3D, SleepDiagram3D, StressDiagram3D, FluidShiftDiagram3D 
+  BodyTempDiagram3D, SleepDiagram3D, StressDiagram3D, FluidShiftDiagram3D,
+  DriftCurveDiagram3D, HydrationDiagram3D, CalorieBurnDiagram3D, 
+  SleepStagesDiagram3D, MoodWaveDiagram3D, RadiationDosimeterMiniDiagram, 
+  BoneMatrixMiniDiagram
 } from '../components/BiometricDiagrams3D';
 import { detectHealthDrifts } from '../utils/anomaly';
 import { soundEngine } from '../utils/audio';
@@ -249,12 +252,12 @@ export default function DashboardPage() {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 font-mono text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
           {[
-            { key: 'water', label: t('checkWater'), icon: Droplets, color: 'text-cyan-400' },
-            { key: 'exercise', label: t('checkExercise'), icon: Activity, color: 'text-amber-400' },
-            { key: 'sleep', label: t('checkSleep'), icon: Moon, color: 'text-purple-400' },
-            { key: 'mood', label: t('checkMood'), icon: Zap, color: 'text-emerald-400' }
+            { key: 'water', label: t('checkWater'), icon: Droplets, color: 'text-cyan-400', diagram: <HydrationDiagram3D /> },
+            { key: 'exercise', label: t('checkExercise'), icon: Activity, color: 'text-amber-400', diagram: <CalorieBurnDiagram3D /> },
+            { key: 'sleep', label: t('checkSleep'), icon: Moon, color: 'text-purple-400', diagram: <SleepStagesDiagram3D /> },
+            { key: 'mood', label: t('checkMood'), icon: Zap, color: 'text-emerald-400', diagram: <MoodWaveDiagram3D /> }
           ].map((item) => {
             const isDone = checklist[item.key];
             const Icon = item.icon;
@@ -263,23 +266,34 @@ export default function DashboardPage() {
                 key={item.key}
                 type="button"
                 onClick={() => toggleChecklistItem(item.key)}
-                className={`p-2.5 rounded-xl border text-left flex items-center justify-between gap-2 transition-all ${
+                className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${
                   isDone
                     ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-200'
                     : 'bg-space-950/80 border-slate-800 text-slate-300 hover:border-slate-700'
                 }`}
               >
-                <div className="flex items-center gap-2 min-w-0">
-                  <Icon className={`w-4 h-4 shrink-0 ${item.color}`} />
-                  <span className={`text-[11px] truncate ${isDone ? 'line-through text-slate-400' : 'font-medium text-white'}`}>
-                    {item.label}
-                  </span>
+                <div className="flex items-center justify-between gap-2 w-full mb-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Icon className={`w-4 h-4 shrink-0 ${item.color}`} />
+                    <span className={`text-[11px] truncate ${isDone ? 'line-through text-slate-400' : 'font-bold text-white'}`}>
+                      {item.label}
+                    </span>
+                  </div>
+                  {isDone ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  ) : (
+                    <Circle className="w-4 h-4 text-slate-600 shrink-0" />
+                  )}
                 </div>
-                {isDone ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                ) : (
-                  <Circle className="w-4 h-4 text-slate-600 shrink-0" />
-                )}
+
+                {/* Google Fit style inline diagram */}
+                <div className="w-full my-1 opacity-90">
+                  {item.diagram}
+                </div>
+
+                <div className="text-[10px] text-slate-400 text-right w-full">
+                  {isDone ? 'Completed' : 'Tap to mark done'}
+                </div>
               </button>
             );
           })}
@@ -307,19 +321,21 @@ export default function DashboardPage() {
           />
 
           <div className="w-full grid grid-cols-2 gap-2 text-center text-xs font-mono pt-2 border-t border-slate-800">
-            <div className="p-2 rounded bg-space-950 border border-slate-800">
+            <div className="p-2 rounded bg-space-950 border border-slate-800 flex flex-col items-center justify-between">
               <div className="flex items-center justify-center">
                 <span className="text-slate-400 text-[10px]">{t('totalRadiation')}</span>
                 <MedicalTermTooltip termKey="tooltipRadiation" label={t('totalRadiation')} />
               </div>
-              <span className="text-white font-bold">{currentVitals.cumulativeRadiation} mSv</span>
+              <RadiationDosimeterMiniDiagram dose={currentVitals.cumulativeRadiation} />
+              <span className="text-white font-bold text-xs">{currentVitals.cumulativeRadiation} mSv</span>
             </div>
-            <div className="p-2 rounded bg-space-950 border border-slate-800">
+            <div className="p-2 rounded bg-space-950 border border-slate-800 flex flex-col items-center justify-between">
               <div className="flex items-center justify-center">
                 <span className="text-slate-400 text-[10px]">{t('boneLoss')}</span>
                 <MedicalTermTooltip termKey="tooltipBMD" label={t('boneLoss')} />
               </div>
-              <span className="text-amber-400 font-bold">-{currentVitals.boneLossPercent}%</span>
+              <BoneMatrixMiniDiagram />
+              <span className="text-amber-400 font-bold text-xs">-{currentVitals.boneLossPercent}%</span>
             </div>
           </div>
         </div>
@@ -348,7 +364,12 @@ export default function DashboardPage() {
               </span>
             </div>
 
-            <div className="space-y-2 mt-3">
+            {/* Google style Gaussian Drift curve diagram */}
+            <div className="my-2">
+              <DriftCurveDiagram3D />
+            </div>
+
+            <div className="space-y-2 mt-2">
               {drifts.length === 0 ? (
                 <p className="text-[11px] text-emerald-300 font-mono py-2">
                   {t('allNormalDrifts')}
